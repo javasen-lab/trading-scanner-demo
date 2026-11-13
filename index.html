@@ -1,46 +1,97 @@
 
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4H Candle Pattern Tester</title>
+<title>5 Candle Pattern Scanner</title>
 <style>
-body{background:#101827;color:white;font-family:Arial;padding:15px}
-h2{text-align:center;color:#60a5fa}
-.card{background:#1e293b;padding:14px;margin:14px 0;border-radius:12px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:5px;text-align:center}
-th{font-size:12px;color:#93c5fd}
-input{width:100%;box-sizing:border-box;padding:9px 2px;background:#0f172a;color:white;border:1px solid #64748b;border-radius:6px;text-align:center}
-button{width:100%;padding:13px;margin:7px 0;border:0;border-radius:8px;color:white;font-weight:bold;font-size:15px}
-.sell{background:#dc3545}
-.buy{background:#16a34a}
-.sample{background:#475569}
-#result{background:#334155;padding:16px;margin-top:15px;border-radius:10px;text-align:center;line-height:1.7}
+body {
+  background:#101827;
+  color:white;
+  font-family:Arial,sans-serif;
+  padding:15px;
+  margin:0;
+}
+.container {
+  max-width:600px;
+  margin:auto;
+}
+h2 {text-align:center;color:#60a5fa;}
+.note {color:#cbd5e1;text-align:center;font-size:13px;}
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+th,td {
+  border:1px solid #475569;
+  padding:7px 3px;
+  text-align:center;
+}
+th {background:#263449;}
+input {
+  width:90%;
+  box-sizing:border-box;
+  padding:9px 2px;
+  text-align:center;
+  background:#263449;
+  color:white;
+  border:1px solid #64748b;
+  border-radius:5px;
+}
+button {
+  padding:12px 8px;
+  border:0;
+  border-radius:7px;
+  color:white;
+  font-weight:bold;
+  margin:5px 1%;
+  width:47%;
+  cursor:pointer;
+}
+.buy {background:#15803d;}
+.sell {background:#dc2626;}
+.sample {background:#475569;}
+.auto {background:#2563eb;width:98%;}
+#result {
+  margin-top:18px;
+  padding:15px;
+  text-align:center;
+  background:#263449;
+  border-radius:8px;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
-<h2>4H CANDLE PATTERN TESTER</h2>
-<p style="text-align:center">Educational Demo</p>
+<div class="container">
+<h2>5 Candle Pattern Scanner</h2>
+<p class="note">Educational Demo Testing Only</p>
 
-<div class="card">
-<h3>5 Candle Values</h3>
 <table>
-<thead><tr><th>No</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr></thead>
+<thead>
+<tr>
+<th>Candle</th>
+<th>Open</th>
+<th>High</th>
+<th>Low</th>
+<th>Close</th>
+</tr>
+</thead>
 <tbody id="rows"></tbody>
 </table>
+
 <button class="sample" onclick="loadSample('SELL')">LOAD SELL SAMPLE</button>
 <button class="sample" onclick="loadSample('BUY')">LOAD BUY SAMPLE</button>
-</div>
 
-<div class="card">
-<h3>Pattern Testing</h3>
 <button class="sell" onclick="test('SELL')">TEST SELL PATTERN</button>
 <button class="buy" onclick="test('BUY')">TEST BUY PATTERN</button>
-</div>
 
-<div id="result">Choose a sample and test</div>
+<button class="auto" onclick="autoTest()">AUTO DETECT BOTH</button>
+
+<div id="result">Enter 5 Candle Values</div>
+</div>
 
 <script>
 const sellData=[
@@ -59,15 +110,19 @@ const buyData=[
 [12,14,10,13]
 ];
 
-function createRows(){
+const rows=document.getElementById("rows");
+
 for(let i=0;i<5;i++){
 let tr=document.createElement("tr");
 tr.innerHTML=`<td>${i+1}</td>`+
 [0,1,2,3].map(j=>
-`<td><input type="number" step="any" id="c${i}_${j}" aria-label="Candle ${i+1} value ${j+1}"></td>`
+`<td><input type="number" step="any" id="c${i}_${j}"></td>`
 ).join("");
-document.getElementById("rows").appendChild(tr);
+rows.appendChild(tr);
 }
+
+function show(msg){
+document.getElementById("result").innerHTML=msg;
 }
 
 function loadSample(type){
@@ -75,43 +130,62 @@ const data=type==="SELL"?sellData:buyData;
 data.forEach((c,i)=>c.forEach((v,j)=>{
 document.getElementById(`c${i}_${j}`).value=v;
 }));
-show(type+" sample loaded. Now test the same pattern.");
+show(type+" sample loaded. Now test.");
 }
 
-function test(type){
+function getCandles(){
 const candles=[];
 for(let i=0;i<5;i++){
-let v=[0,1,2,3].map(j=>document.getElementById(`c${i}_${j}`).value.trim());
+let v=[0,1,2,3].map(j=>
+document.getElementById(`c${i}_${j}`).value.trim()
+);
 if(v.some(x=>x==="")){
 show("Please fill all 5 candle values.");
-return;
+return null;
 }
 let [o,h,l,c]=v.map(Number);
-if(![o,h,l,c].every(Number.isFinite)||h<Math.max(o,c)||l>Math.min(o,c)||h<l){
+if(![o,h,l,c].every(Number.isFinite)||
+h<Math.max(o,c)||l>Math.min(o,c)||h<l){
 show("Invalid values in Candle "+(i+1));
-return;
+return null;
 }
 candles.push({o,h,l,c});
 }
-let valid=false;
+return candles;
+}
+
+function detect(candles,type){
 if(type==="SELL"){
-valid=candles.slice(0,3).every(x=>x.c>x.o)&&
+return candles.slice(0,3).every(x=>x.c>x.o)&&
 candles[3].c<candles[3].o&&
 candles[4].c<candles[4].o&&
 candles[4].l<candles[3].l;
-}else{
-valid=candles.slice(0,3).every(x=>x.c<x.o)&&
+}
+return candles.slice(0,3).every(x=>x.c<x.o)&&
 candles[3].c>candles[3].o&&
 candles[4].c>candles[4].o&&
 candles[4].h>candles[3].h;
 }
-show(valid?"SUCCESS!<br>"+type+" Pattern Detected<br>Demo Test Passed":"Pattern Not Detected");
+
+function test(type){
+const candles=getCandles();
+if(!candles)return;
+let valid=detect(candles,type);
+show(valid?
+"SUCCESS!<br>"+type+" Pattern Detected<br>Demo Test Passed":
+"Pattern Not Detected");
 }
 
-function show(msg){
-document.getElementById("result").innerHTML=msg;
+function autoTest(){
+const candles=getCandles();
+if(!candles)return;
+let buy=detect(candles,"BUY");
+let sell=detect(candles,"SELL");
+show("AUTO DETECTION RESULT<br><br>"+
+"BUY: "+(buy?"DETECTED":"NOT DETECTED")+
+"<br>SELL: "+(sell?"DETECTED":"NOT DETECTED"));
 }
-createRows();
+
 loadSample("SELL");
 </script>
 </body>
