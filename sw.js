@@ -1,5 +1,6 @@
 
-const CACHE_NAME = "scanner-v10";
+const CACHE_NAME = "scanner-v11";
+
 const FILES = [
   "./",
   "./index.html",
