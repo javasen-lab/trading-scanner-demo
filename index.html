@@ -1,25 +1,26 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#101827">
-  
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>400H Demo Scanner V888</title>
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="./manifest.json">
+<title>4H Candle Demo Scanner V9</title>
+
 <style>
-body{background:#101827;color:white;font-family:Arial;padding:12px;margin:0}
+*{box-sizing:border-box}
+body{background:#101827;color:white;font-family:Arial,sans-serif;padding:12px;margin:0}
 .container{max-width:700px;margin:auto}
 h2,h3{text-align:center;color:#60a5fa}
 .note,.small{color:#cbd5e1;text-align:center;font-size:13px}
 table{width:100%;border-collapse:collapse;margin:12px 0}
 th,td{border:1px solid #475569;padding:7px 3px;text-align:center}
 th{background:#263449}
-input,select{box-sizing:border-box;padding:10px;background:#263449;color:white;border:1px solid #64748b;border-radius:5px}
+input,select{padding:10px;background:#263449;color:white;border:1px solid #64748b;border-radius:5px}
 input[type=number]{width:90%;text-align:center}
 .timeinput,.search{width:100%;margin:8px 0}
-button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;margin:5px 1%;width:47%}
+button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;margin:5px 1%;width:47%;cursor:pointer}
 .buy{background:#15803d}
 .sell{background:#dc2626}
 .sample{background:#475569}
@@ -28,6 +29,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .export{background:#0f766e;width:98%}
 .backup{background:#7c3aed;width:98%}
 .restore{background:#0369a1;width:98%}
+.install{background:#d97706;width:98%}
 .delete{background:#991b1b;width:auto;padding:7px 12px}
 #result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold;overflow-wrap:anywhere}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
@@ -37,19 +39,23 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .history{background:#263449;padding:12px;margin:8px 0;border-radius:7px;font-size:13px;overflow-wrap:anywhere}
 .history details{margin-top:8px}
 .history summary{color:#93c5fd;cursor:pointer}
-.filters select{width:100%}
 .bar-bg{height:15px;background:#475569;border-radius:10px;overflow:hidden;margin:7px 0}
 .bar{height:100%;width:0%;background:#22c55e}
 .bar.sellbar{background:#ef4444}
 </style>
 </head>
+
 <body>
 <div class="container">
 
-<h2>401 H Candle Demo Scanner</h2>
-<p class="note">V8.1 | Educational Demo Onlyyyyy</p>
+<h2>4H Candle Demo Scanner</h2>
+<p class="note">V9 | Educational Demo Only</p>
 
-<h3>Statistics Dashboarddd</h3>
+<button class="install" id="installBtn" style="display:none">INSTALL APP</button>
+<p class="small" id="appStatus">Scanner Ready</p>
+
+<h3>Statistics Dashboard</h3>
+
 <div class="cards">
 <div class="stat"><span>TOTAL TESTS</span><strong id="total">0</strong></div>
 <div class="stat"><span>BUY DETECTED</span><strong id="buyCount">0</strong></div>
@@ -69,6 +75,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <input class="timeinput" type="datetime-local" id="candleTime">
 
 <h3>5 Candle Input</h3>
+
 <table>
 <thead>
 <tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>
@@ -90,7 +97,8 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreHistory(event)">
 
 <h3>History Management</h3>
-<select id="filter" onchange="renderHistory()">
+
+<select id="filter" onchange="renderHistory()" style="width:100%">
 <option value="ALL">All History</option>
 <option value="BUY">BUY</option>
 <option value="SELL">SELL</option>
@@ -105,9 +113,13 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <div id="history">No history yet</div>
 <button class="clear" onclick="clearHistory()">CLEAR ALL HISTORY</button>
 
+<p class="note">Educational pattern testing only. Not a real trading signal.</p>
+
 </div>
 
 <script>
+"use strict";
+
 const KEY="demoPatternHistory";
 
 const sellData=[
@@ -145,20 +157,25 @@ show(type+" SAMPLE LOADED");
 
 function getCandles(){
 const candles=[];
+
 for(let i=0;i<5;i++){
 let v=[0,1,2,3].map(j=>
 document.getElementById(`c${i}_${j}`).value.trim()
 );
+
 if(v.some(x=>x==="")){
 show("Please fill all 5 candle values");
 return null;
 }
+
 let [o,h,l,c]=v.map(Number);
+
 if(![o,h,l,c].every(Number.isFinite)||
 h<Math.max(o,c)||l>Math.min(o,c)||h<l){
 show("Invalid Candle "+(i+1));
 return null;
 }
+
 candles.push({o,h,l,c});
 }
 return candles;
@@ -171,6 +188,7 @@ candles[3].c<candles[3].o&&
 candles[4].c<candles[4].o&&
 candles[4].l<candles[3].l;
 }
+
 return candles.slice(0,3).every(x=>x.c<x.o)&&
 candles[3].c>candles[3].o&&
 candles[4].c>candles[4].o&&
@@ -181,14 +199,19 @@ function getHistory(){
 try{
 const data=JSON.parse(localStorage.getItem(KEY)||"[]");
 return Array.isArray(data)?data:[];
-}catch(e){return [];}
+}catch(e){
+return [];
+}
 }
 
 function storeHistory(data){
 localStorage.setItem(KEY,JSON.stringify(data));
 }
 
-/* V8: Explicitly separate test mode and detected pattern */
+function getPattern(item){
+return item.pattern||item.type||"UNKNOWN";
+}
+
 function saveHistory(mode,pattern,result,candles){
 try{
 const history=getHistory();
@@ -213,20 +236,13 @@ show("Storage unavailable. Could not save.");
 }
 }
 
-function getPattern(item){
-return item.pattern||item.type||"UNKNOWN";
-}
-
 function updateStats(){
 const h=getHistory();
 
-const buy=h.filter(x=>
-getPattern(x)==="BUY"&&x.result==="DETECTED").length;
-
-const sell=h.filter(x=>
-getPattern(x)==="SELL"&&x.result==="DETECTED").length;
-
+const buy=h.filter(x=>getPattern(x)==="BUY"&&x.result==="DETECTED").length;
+const sell=h.filter(x=>getPattern(x)==="SELL"&&x.result==="DETECTED").length;
 const miss=h.filter(x=>x.result==="NOT DETECTED").length;
+
 const total=h.length;
 const detected=buy+sell;
 const sum=detected||1;
@@ -240,10 +256,8 @@ document.getElementById("sellCount").textContent=sell;
 document.getElementById("missCount").textContent=miss;
 document.getElementById("buyBar").style.width=bp+"%";
 document.getElementById("sellBar").style.width=sp+"%";
-document.getElementById("percentages").textContent=
-"BUY "+bp+"% | SELL "+sp+"%";
-document.getElementById("distribution").textContent=
-detected+" detected patterns";
+document.getElementById("percentages").textContent="BUY "+bp+"% | SELL "+sp+"%";
+document.getElementById("distribution").textContent=detected+" detected patterns";
 }
 
 function renderHistory(){
@@ -253,19 +267,12 @@ const query=document.getElementById("search").value.toLowerCase();
 
 const filtered=all.filter(item=>{
 const pattern=getPattern(item);
-const matchFilter=filter==="ALL"||
-pattern===filter||item.result===filter;
-
-const matchSearch=(
-item.date+" "+item.candleTime+" "+
-(item.mode||"TEST")+" "+pattern+" "+item.result
-).toLowerCase().includes(query);
-
+const matchFilter=filter==="ALL"||pattern===filter||item.result===filter;
+const matchSearch=(item.date+" "+item.candleTime+" "+(item.mode||"TEST")+" "+pattern+" "+item.result).toLowerCase().includes(query);
 return matchFilter&&matchSearch;
 });
 
-document.getElementById("count").textContent=
-filtered.length+" records shown / "+all.length+" saved";
+document.getElementById("count").textContent=filtered.length+" records shown / "+all.length+" saved";
 
 const box=document.getElementById("history");
 box.innerHTML="";
@@ -279,16 +286,12 @@ filtered.forEach((item,index)=>{
 const div=document.createElement("div");
 div.className="history";
 
-const pattern=getPattern(item);
-const mode=item.mode||"TEST";
-
 const heading=document.createElement("strong");
-heading.textContent=(index+1)+". "+mode+" → "+pattern+" | "+item.result;
+heading.textContent=(index+1)+". "+(item.mode||"TEST")+" → "+getPattern(item)+" | "+item.result;
 div.appendChild(heading);
 
 const info=document.createElement("p");
-info.textContent="Tested: "+item.date+
-" | 4H Candle: "+(item.candleTime||"Not entered");
+info.textContent="Tested: "+item.date+" | 4H Candle: "+(item.candleTime||"Not entered");
 div.appendChild(info);
 
 const details=document.createElement("details");
@@ -335,7 +338,7 @@ const history=getHistory();
 if(history.length===0){show("No history to backup");return;}
 
 const blob=new Blob(
-[JSON.stringify({app:"4H Demo Scanner",version:8,history:history},null,2)],
+[JSON.stringify({app:"4H Demo Scanner",version:9,history:history},null,2)],
 {type:"application/json"}
 );
 
@@ -413,11 +416,7 @@ return '"'+String(v??"").replace(/"/g,'""')+'"';
 const lines=[headers.map(quote).join(",")];
 
 history.forEach(item=>{
-const row=[
-item.date,item.candleTime,item.mode||"TEST",
-getPattern(item),item.result
-];
-
+const row=[item.date,item.candleTime,item.mode||"TEST",getPattern(item),item.result];
 (item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
 lines.push(row.map(quote).join(","));
 });
@@ -443,7 +442,6 @@ if(!candles)return;
 
 const valid=detect(candles,type);
 show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
-
 saveHistory("TEST",type,valid,candles);
 }
 
@@ -458,17 +456,9 @@ show("AUTO DETECTION | BUY: "+
 (buyDetected?"DETECTED":"NOT DETECTED")+
 " | SELL: "+(sellDetected?"DETECTED":"NOT DETECTED"));
 
-if(buyDetected){
-saveHistory("AUTO","BUY",true,candles);
-}
-
-if(sellDetected){
-saveHistory("AUTO","SELL",true,candles);
-}
-
-if(!buyDetected&&!sellDetected){
-saveHistory("AUTO","BOTH",false,candles);
-}
+if(buyDetected)saveHistory("AUTO","BUY",true,candles);
+if(sellDetected)saveHistory("AUTO","SELL",true,candles);
+if(!buyDetected&&!sellDetected)saveHistory("AUTO","BOTH",false,candles);
 }
 
 function clearHistory(){
@@ -482,14 +472,41 @@ show("History cleared");
 renderHistory();
 updateStats();
 loadSample("SELL");
-  if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .then(() => console.log("Offline support ready"))
-      .catch(err => console.log("Service worker error:", err));
-  });
-           }
-  
+
+/* PWA Service Worker */
+if("serviceWorker" in navigator){
+window.addEventListener("load",()=>{
+navigator.serviceWorker.register("./sw.js")
+.then(()=>{
+document.getElementById("appStatus").textContent="Offline support ready";
+})
+.catch(()=>{
+document.getElementById("appStatus").textContent="Offline setup pending";
+});
+});
+}
+
+/* Install button */
+let installPrompt=null;
+
+window.addEventListener("beforeinstallprompt",event=>{
+event.preventDefault();
+installPrompt=event;
+document.getElementById("installBtn").style.display="block";
+});
+
+document.getElementById("installBtn").addEventListener("click",async()=>{
+if(!installPrompt)return;
+installPrompt.prompt();
+await installPrompt.userChoice;
+installPrompt=null;
+document.getElementById("installBtn").style.display="none";
+});
+
+window.addEventListener("appinstalled",()=>{
+document.getElementById("appStatus").textContent="App installed";
+document.getElementById("installBtn").style.display="none";
+});
 </script>
 </body>
 </html>
