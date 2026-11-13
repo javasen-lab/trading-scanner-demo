@@ -1,223 +1,205 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101827">
 <link rel="manifest" href="./manifest.json">
-<title>4H Candle Demo Scanner V10</title>
+<title>4H Candle Demo Scanner V11</title>
 
 <style>
 *{box-sizing:border-box}
-body{background:#101827;color:white;font-family:Arial,sans-serif;padding:12px;margin:0}
-.container{max-width:700px;margin:auto}
-h2,h3{text-align:center;color:#60a5fa}
-.note,.small{color:#cbd5e1;text-align:center;font-size:13px}
-table{width:100%;border-collapse:collapse;margin:12px 0}
-th,td{border:1px solid #475569;padding:7px 3px;text-align:center}
-th{background:#263449}
-input,select{padding:10px;background:#263449;color:white;border:1px solid #64748b;border-radius:5px}
-input[type=number]{width:90%;text-align:center}
-.timeinput,.search{width:100%;margin:8px 0}
-button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;margin:5px 1%;width:47%;cursor:pointer}
-.buy{background:#15803d}
-.sell{background:#dc2626}
-.sample{background:#475569}
-.blue{background:#2563eb;width:98%}
-.clear{background:#64748b;width:98%}
-.export{background:#0f766e;width:98%}
-.backup{background:#7c3aed;width:98%}
-.restore{background:#0369a1;width:98%}
-.install{background:#d97706;width:98%}
-.delete{background:#991b1b;width:auto;padding:7px 12px}
-#result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold;overflow-wrap:anywhere}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-.stat{background:#263449;padding:15px 8px;border-radius:9px;text-align:center}
-.stat strong{display:block;font-size:25px;margin-top:7px}
-.stat span{font-size:12px;color:#cbd5e1}
-.history{background:#263449;padding:12px;margin:8px 0;border-radius:7px;font-size:13px;overflow-wrap:anywhere}
-.history details{margin-top:8px}
-.history summary{color:#93c5fd;cursor:pointer}
-.bar-bg{height:15px;background:#475569;border-radius:10px;overflow:hidden;margin:7px 0}
-.bar{height:100%;width:0%;background:#22c55e}
-.bar.sellbar{background:#ef4444}
-.help{background:#263449;border-radius:8px;padding:12px;font-size:13px;color:#cbd5e1;line-height:1.6}
-input.invalid{border:2px solid #ef4444}
-button:active{opacity:.8}
+body{
+ margin:0;padding:15px;background:#101827;color:#e5e7eb;
+ font-family:Arial,sans-serif;font-size:15px
+}
+.container{max-width:720px;margin:auto}
+h2,h3{color:#60a5fa}
+.card{
+ background:#1e293b;padding:15px;margin:12px 0;
+ border-radius:12px;border:1px solid #334155
+}
+input,select,button{
+ padding:12px;border-radius:7px;border:1px solid #475569;
+ font-size:15px
+}
+input,select{background:#0f172a;color:white;width:100%;min-width:0}
+button{
+ background:#2563eb;color:white;border:0;
+ cursor:pointer;margin:4px 2px;min-height:44px
+}
+button:active{opacity:.75}
+.green{background:#15803d}
+.red{background:#b91c1c}
+.orange{background:#c2410c}
+.gray{background:#475569}
+.row{display:flex;gap:7px;flex-wrap:wrap}
+.row button{flex:1}
+.table-wrap{overflow-x:auto;width:100%}
+table{width:100%;border-collapse:collapse;min-width:480px}
+th,td{padding:9px;border-bottom:1px solid #475569;text-align:center}
+th{color:#93c5fd}
+.small{font-size:12px;color:#94a3b8}
+.result{font-size:18px;font-weight:bold;padding:12px;border-radius:8px}
+.success{background:#14532d;color:#bbf7d0}
+.failure{background:#7f1d1d;color:#fecaca}
+.info{background:#1e40af;color:#dbeafe}
+.warning{background:#78350f;color:#fde68a}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{
+ background:#0f172a;padding:12px;border-radius:8px;text-align:center
+}
+.stat strong{display:block;font-size:23px;color:#60a5fa}
+.history-item{
+ background:#0f172a;padding:12px;margin:9px 0;border-radius:8px;
+ border:1px solid #334155;overflow-wrap:anywhere
+}
+.history-item button{min-height:36px;padding:8px}
+label{display:block;margin:8px 0 5px}
+input[type=checkbox]{width:auto;min-width:auto}
+.hidden{display:none}
+.notice{font-size:13px;color:#cbd5e1;line-height:1.5}
+@media(max-width:480px){
+ body{padding:9px}
+ .card{padding:11px}
+ button{font-size:14px}
+}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h2>4H Candle Demo Scanner</h2>
-<p class="note">V10 | Educational Demo Only</p>
+<h2>4H Candle Demo Scanner <span class="small">V11</span></h2>
+<p class="small">Manual candle-pattern testing | Educational demo only</p>
 
-<button class="install" id="installBtn" style="display:none">INSTALL APP</button>
-<p class="small" id="appStatus">Scanner Ready</p>
-
-<h3>Statistics Dashboard</h3>
-<div class="cards">
-<div class="stat"><span>TOTAL TESTS</span><strong id="total">0</strong></div>
-<div class="stat"><span>BUY DETECTED</span><strong id="buyCount">0</strong></div>
-<div class="stat"><span>SELL DETECTED</span><strong id="sellCount">0</strong></div>
-<div class="stat"><span>NOT DETECTED</span><strong id="missCount">0</strong></div>
+<div class="card">
+ <h3>Statistics</h3>
+ <div class="stat-grid">
+  <div class="stat">Total Tests<strong id="totalTests">0</strong></div>
+  <div class="stat">Detected<strong id="detected">0</strong></div>
+  <div class="stat">Not Detected<strong id="notDetected">0</strong></div>
+  <div class="stat">BUY Patterns<strong id="buyCount">0</strong></div>
+  <div class="stat">SELL Patterns<strong id="sellCount">0</strong></div>
+ </div>
 </div>
 
-<div class="stat">
-<span>BUY / SELL DISTRIBUTION</span>
-<p id="distribution">No data</p>
-<div class="bar-bg"><div class="bar" id="buyBar"></div></div>
-<div class="bar-bg"><div class="bar sellbar" id="sellBar"></div></div>
-<p class="small" id="percentages">BUY 0% | SELL 0%</p>
+<div class="card">
+ <h3>4H Candle Start Time</h3>
+ <input type="datetime-local" id="candleTime">
 </div>
 
-<h3>4H Candle Start Time</h3>
-<input class="timeinput" type="datetime-local" id="candleTime">
-
-<h3>5 Candle Input</h3>
-<p class="small">All OHLC values must be greater than zero.</p>
-
-<table>
-<thead>
-<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-
-<button class="sample" onclick="loadSample('SELL')">LOAD SELL SAMPLE</button>
-<button class="sample" onclick="loadSample('BUY')">LOAD BUY SAMPLE</button>
-<button class="sell" onclick="test('SELL')">TEST SELL</button>
-<button class="buy" onclick="test('BUY')">TEST BUY</button>
-<button class="blue" onclick="autoTest()">AUTO DETECT BOTH</button>
-
-<div id="result">Enter Candle Values</div>
-
-<div class="help">
-<strong>Candle Validation Rules</strong><br>
-1. All 5 candles must have Open, High, Low and Close values.<br>
-2. Values must be valid positive numbers.<br>
-3. High must be equal to or greater than Open and Close.<br>
-4. Low must be equal to or lower than Open and Close.<br>
-5. High must be equal to or greater than Low.
+<div class="card">
+ <h3>Enter 5 Candle OHLC Values</h3>
+ <p class="small">O = Open | H = High | L = Low | C = Close</p>
+ <div class="table-wrap">
+ <table>
+  <thead>
+   <tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>
+  </thead>
+  <tbody id="rows"></tbody>
+ </table>
+ </div>
+ <div class="row">
+  <button class="orange" onclick="loadSample('SELL')">Load SELL Sample</button>
+  <button class="green" onclick="loadSample('BUY')">Load BUY Sample</button>
+ </div>
 </div>
 
-<h3>History Backup & Restore</h3>
-<button class="backup" onclick="backupHistory()">DOWNLOAD BACKUP</button>
-<button class="restore" onclick="document.getElementById('restoreFile').click()">RESTORE BACKUP</button>
-<input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreHistory(event)">
+<div class="card">
+ <h3>Pattern Testing</h3>
+ <div class="row">
+  <button class="red" onclick="test('SELL')">Test SELL</button>
+  <button class="green" onclick="test('BUY')">Test BUY</button>
+ </div>
+ <button style="width:100%" onclick="autoTest()">AUTO DETECT BOTH</button>
+ <div id="result" class="result info" style="margin-top:12px">
+  Enter candle values and select a test.
+ </div>
+</div>
 
-<h3>History Management</h3>
-<select id="filter" onchange="renderHistory()" style="width:100%">
-<option value="ALL">All History</option>
-<option value="BUY">BUY</option>
-<option value="SELL">SELL</option>
-<option value="DETECTED">Detected</option>
-<option value="NOT DETECTED">Not Detected</option>
-</select>
+<div class="card">
+ <h3>Settings</h3>
+ <label>
+  <input type="checkbox" id="duplicateWarning" checked>
+  Enable Duplicate Warning
+ </label>
+ <p class="small">If the same test data already exists, the app will ask before saving it again.</p>
+ <button class="gray" onclick="saveSettings()">Save Settings</button>
+ <span id="settingsStatus" class="small"></span>
+</div>
 
-<input class="search" id="search" placeholder="Search history..." oninput="renderHistory()">
+<div class="card">
+ <h3>Backup / Restore</h3>
+ <div class="row">
+  <button onclick="backupHistory()">Download Backup</button>
+  <button class="orange" onclick="document.getElementById('restoreFile').click()">Restore Backup</button>
+ </div>
+ <input type="file" id="restoreFile" accept=".json,application/json" class="hidden" onchange="restoreHistory(event)">
+ <p class="small">Backup உங்கள் History பதிவுகளை JSON கோப்பாக சேமிக்கும்.</p>
+</div>
 
-<button class="export" onclick="exportCSV()">EXPORT HISTORY CSV</button>
-<p class="small" id="count">0 records</p>
-<div id="history">No history yet</div>
-<button class="clear" onclick="clearHistory()">CLEAR ALL HISTORY</button>
+<div class="card">
+ <h3>History Management</h3>
+ <input id="searchHistory" placeholder="Search history..." oninput="renderHistory()">
+ <label>Filter</label>
+ <select id="historyFilter" onchange="renderHistory()">
+  <option value="ALL">All History</option>
+  <option value="BUY">BUY</option>
+  <option value="SELL">SELL</option>
+  <option value="BOTH">AUTO BOTH</option>
+  <option value="DETECTED">Detected</option>
+  <option value="NOT DETECTED">Not Detected</option>
+ </select>
+ <div class="row">
+  <button onclick="exportCSV()">Export CSV</button>
+  <button class="red" onclick="clearHistory()">Clear All History</button>
+ </div>
+ <div id="historyList"></div>
+</div>
 
-<p class="note">Educational pattern testing only. Not a real trading signal.</p>
+<div class="card">
+ <h3>Pattern Rules</h3>
+ <p class="notice">
+ BUY demo: First 3 candles red, next 2 candles green, and the 5th candle high must be greater than the 4th candle high.
+ </p>
+ <p class="notice">
+ SELL demo: First 3 candles green, next 2 candles red, and the 5th candle low must be lower than the 4th candle low.
+ </p>
+ <p class="notice">
+ This app checks manually entered candle patterns only. Results are educational pattern matches, not financial or trading signals.
+ </p>
+</div>
+
+<p id="appStatus" class="small">App starting...</p>
+<button id="installBtn" class="hidden" style="width:100%">Install App</button>
+
 </div>
 
 <script>
 "use strict";
 
-const KEY="demoPatternHistory";
+const HISTORY_KEY = "demoPatternHistory";
+const SETTINGS_KEY = "demoScannerSettings";
+const MAX_HISTORY = 100;
+let deferredInstallPrompt = null;
 
-const sellData=[
-[10,12,9,11],[11,13,10,12],[12,14,11,13],
-[13,14,11,12],[12,13,10,11]
-];
+const rows = document.getElementById("rows");
 
-const buyData=[
-[13,14,11,12],[12,13,10,11],[11,12,9,10],
-[10,13,9,12],[12,14,10,13]
-];
-
-const rows=document.getElementById("rows");
-
-for(let i=0;i<5;i++){
+for(let i=1;i<=5;i++){
  const tr=document.createElement("tr");
- tr.innerHTML=`<td>${i+1}</td>`+
- [0,1,2,3].map(j=>
- `<td><input type="number" min="0" step="any" id="c${i}_${j}" aria-label="Candle ${i+1} value ${j+1}"></td>`
- ).join("");
+ tr.innerHTML=`
+ <td>${i}</td>
+ <td><input type="number" step="any" id="o${i}" placeholder="Open"></td>
+ <td><input type="number" step="any" id="h${i}" placeholder="High"></td>
+ <td><input type="number" step="any" id="l${i}" placeholder="Low"></td>
+ <td><input type="number" step="any" id="c${i}" placeholder="Close"></td>`;
  rows.appendChild(tr);
-}
-
-function show(msg){
- document.getElementById("result").textContent=msg;
-}
-
-function loadSample(type){
- const data=type==="SELL"?sellData:buyData;
- data.forEach((c,i)=>c.forEach((v,j)=>{
-  const input=document.getElementById(`c${i}_${j}`);
-  input.value=v;
-  input.classList.remove("invalid");
- }));
- show(type+" SAMPLE LOADED");
-}
-
-function getCandles(){
- const candles=[];
- document.querySelectorAll('input[type="number"]').forEach(x=>x.classList.remove("invalid"));
-
- for(let i=0;i<5;i++){
-  const inputs=[0,1,2,3].map(j=>document.getElementById(`c${i}_${j}`));
-  const values=inputs.map(x=>x.value.trim());
-
-  if(values.some(x=>x==="")){
-   inputs.forEach(x=>x.classList.add("invalid"));
-   show("Candle "+(i+1)+": Please fill all 4 values");
-   return null;
-  }
-
-  const nums=values.map(Number);
-  const [o,h,l,c]=nums;
-
-  if(!nums.every(Number.isFinite)||nums.some(x=>x<=0)){
-   inputs.forEach(x=>x.classList.add("invalid"));
-   show("Candle "+(i+1)+": Values must be positive valid numbers");
-   return null;
-  }
-
-  if(h<Math.max(o,c)||l>Math.min(o,c)||h<l){
-   inputs.forEach(x=>x.classList.add("invalid"));
-   show("Candle "+(i+1)+": Invalid OHLC relationship");
-   return null;
-  }
-
-  candles.push({o,h,l,c});
- }
- return candles;
-}
-
-function detect(candles,type){
- if(type==="SELL"){
-  return candles.slice(0,3).every(x=>x.c>x.o)&&
-   candles[3].c<candles[3].o&&
-   candles[4].c<candles[4].o&&
-   candles[4].l<candles[3].l;
- }
-
- return candles.slice(0,3).every(x=>x.c<x.o)&&
-  candles[3].c>candles[3].o&&
-  candles[4].c>candles[4].o&&
-  candles[4].h>candles[3].h;
 }
 
 function getHistory(){
  try{
-  const data=JSON.parse(localStorage.getItem(KEY)||"[]");
+  const data=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
   return Array.isArray(data)?data:[];
  }catch(e){
   return [];
@@ -225,153 +207,323 @@ function getHistory(){
 }
 
 function storeHistory(data){
- localStorage.setItem(KEY,JSON.stringify(data));
-}
-
-function getPattern(item){
- return item.pattern||item.type||"UNKNOWN";
-}
-
-function saveHistory(mode,pattern,result,candles){
  try{
-  const history=getHistory();
-  const record={
-   id:Date.now()+"-"+Math.random().toString(36).slice(2),
-   date:new Date().toLocaleString(),
-   candleTime:document.getElementById("candleTime").value||"Not entered",
-   mode,
-   pattern,
-   type:pattern,
-   result:result?"DETECTED":"NOT DETECTED",
-   candles:candles.map(x=>({...x}))
-  };
-  storeHistory([record,...history].slice(0,100));
-  renderHistory();
-  updateStats();
+  localStorage.setItem(HISTORY_KEY,JSON.stringify(data));
+  const check=JSON.parse(localStorage.getItem(HISTORY_KEY)||"null");
+  if(!Array.isArray(check) || check.length!==data.length){
+   throw new Error("Storage verification failed");
+  }
+  return true;
  }catch(e){
-  show("Storage unavailable. Could not save history.");
+  showResult("History could not be saved. Browser storage may be full or unavailable.","failure");
+  return false;
+ }
+}
+
+function getSettings(){
+ try{
+  const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||"null");
+  return {duplicateWarning:data?.duplicateWarning!==false};
+ }catch(e){
+  return {duplicateWarning:true};
+ }
+}
+
+function saveSettings(){
+ const settings={
+  duplicateWarning:document.getElementById("duplicateWarning").checked
+ };
+ try{
+  localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+  document.getElementById("settingsStatus").textContent="Settings saved.";
+ }catch(e){
+  document.getElementById("settingsStatus").textContent="Could not save settings.";
+ }
+}
+
+function loadSettings(){
+ document.getElementById("duplicateWarning").checked=getSettings().duplicateWarning;
+}
+
+function showResult(message,type){
+ const el=document.getElementById("result");
+ el.textContent=message;
+ el.className="result "+type;
+}
+
+function loadSample(type){
+ const buyData=[
+  [13,14,11,12],
+  [12,13,10,11],
+  [11,12,9,10],
+  [10,13,9,12],
+  [12,14,10,13]
+ ];
+
+ const sellData=[
+  [10,12,9,11],
+  [11,13,10,12],
+  [12,14,11,13],
+  [13,14,11,12],
+  [12,13,10,11]
+ ];
+
+ const data=type==="BUY"?buyData:sellData;
+
+ data.forEach((v,i)=>{
+  ["o","h","l","c"].forEach((key,j)=>{
+   document.getElementById(key+(i+1)).value=v[j];
+  });
+ });
+
+ showResult(type+" sample data loaded. Press Test "+type+".","info");
+}
+
+function getCandles(){
+ const data=[];
+ for(let i=1;i<=5;i++){
+  const values=["o","h","l","c"].map(k=>{
+   const raw=document.getElementById(k+i).value.trim();
+   return raw===""?NaN:Number(raw);
+  });
+
+  if(values.some(v=>!Number.isFinite(v))){
+   throw new Error("Candle "+i+": Please fill all 4 values.");
+  }
+
+  const [o,h,l,c]=values;
+
+  if([o,h,l,c].some(v=>v<=0)){
+   throw new Error("Candle "+i+": Values must be greater than zero.");
+  }
+
+  if(h<Math.max(o,c)){
+   throw new Error("Candle "+i+": High must be greater than or equal to Open and Close.");
+  }
+
+  if(l>Math.min(o,c)){
+   throw new Error("Candle "+i+": Low must be less than or equal to Open and Close.");
+  }
+
+  if(h<l){
+   throw new Error("Candle "+i+": High cannot be lower than Low.");
+  }
+
+  data.push({open:o,high:h,low:l,close:c});
+ }
+ return data;
+}
+
+function getPattern(candles,type){
+ const firstThree=candles.slice(0,3);
+ const fourth=candles[3];
+ const fifth=candles[4];
+
+ if(type==="BUY"){
+  return firstThree.every(x=>x.close<x.open) &&
+   fourth.close>fourth.open &&
+   fifth.close>fifth.open &&
+   fifth.high>fourth.high;
+ }
+
+ if(type==="SELL"){
+  return firstThree.every(x=>x.close>x.open) &&
+   fourth.close<fourth.open &&
+   fifth.close<fifth.open &&
+   fifth.low<fourth.low;
+ }
+
+ return false;
+}
+
+function sameCandles(a,b){
+ return Array.isArray(a)&&Array.isArray(b)&&
+  a.length===5&&b.length===5&&
+  a.every((x,i)=>
+   x.open===b[i].open &&
+   x.high===b[i].high &&
+   x.low===b[i].low &&
+   x.close===b[i].close
+  );
+}
+
+function isDuplicate(mode,pattern,candles){
+ return getHistory().some(record=>
+  record.mode===mode &&
+  (record.pattern||record.type)===pattern &&
+  sameCandles(record.candles,candles)
+ );
+}
+
+function saveTest(mode,pattern,result,candles){
+ const history=getHistory();
+
+ if(getSettings().duplicateWarning && isDuplicate(mode,pattern,candles)){
+  const proceed=confirm(
+   "Duplicate Warning!\n\nThe same candle data and test already exist in History.\n\nDo you want to save this duplicate test?"
+  );
+  if(!proceed){
+   showResult("Duplicate test was not saved. Existing History is unchanged.","warning");
+   return false;
+  }
+ }
+
+ const record={
+  id:Date.now()+"-"+Math.random().toString(36).slice(2),
+  date:new Date().toLocaleString(),
+  candleTime:document.getElementById("candleTime").value||"Not entered",
+  mode:mode,
+  pattern:pattern,
+  type:pattern,
+  result:result?"DETECTED":"NOT DETECTED",
+  candles:candles.map(x=>({...x}))
+ };
+
+ history.unshift(record);
+ const trimmed=history.slice(0,MAX_HISTORY);
+
+ if(!storeHistory(trimmed)) return false;
+
+ renderHistory();
+ updateStats();
+ return true;
+}
+
+function test(type){
+ try{
+  const candles=getCandles();
+  const result=getPattern(candles,type);
+
+  showResult(
+   type+" Pattern: "+(result?"DETECTED":"NOT DETECTED"),
+   result?"success":"failure"
+  );
+
+  saveTest("TEST",type,result,candles);
+ }catch(e){
+  showResult(e.message,"failure");
+ }
+}
+
+function autoTest(){
+ try{
+  const candles=getCandles();
+  const buy=getPattern(candles,"BUY");
+  const sell=getPattern(candles,"SELL");
+
+  if(buy){
+   showResult("AUTO DETECT: BUY Pattern Detected","success");
+   saveTest("AUTO","BUY",true,candles);
+  }else if(sell){
+   showResult("AUTO DETECT: SELL Pattern Detected","success");
+   saveTest("AUTO","SELL",true,candles);
+  }else{
+   showResult("AUTO DETECT: No BUY or SELL Pattern Detected","warning");
+   saveTest("AUTO","BOTH",false,candles);
+  }
+ }catch(e){
+  showResult(e.message,"failure");
  }
 }
 
 function updateStats(){
- const h=getHistory();
- const buy=h.filter(x=>getPattern(x)==="BUY"&&x.result==="DETECTED").length;
- const sell=h.filter(x=>getPattern(x)==="SELL"&&x.result==="DETECTED").length;
- const miss=h.filter(x=>x.result==="NOT DETECTED").length;
- const total=h.length;
- const detected=buy+sell;
- const sum=detected||1;
- const bp=Math.round(buy/sum*100);
- const sp=Math.round(sell/sum*100);
-
- document.getElementById("total").textContent=total;
- document.getElementById("buyCount").textContent=buy;
- document.getElementById("sellCount").textContent=sell;
- document.getElementById("missCount").textContent=miss;
- document.getElementById("buyBar").style.width=bp+"%";
- document.getElementById("sellBar").style.width=sp+"%";
- document.getElementById("percentages").textContent="BUY "+bp+"% | SELL "+sp+"%";
- document.getElementById("distribution").textContent=detected+" detected patterns";
+ const history=getHistory();
+ document.getElementById("totalTests").textContent=history.length;
+ document.getElementById("detected").textContent=
+  history.filter(x=>x.result==="DETECTED").length;
+ document.getElementById("notDetected").textContent=
+  history.filter(x=>x.result==="NOT DETECTED").length;
+ document.getElementById("buyCount").textContent=
+  history.filter(x=>(x.pattern||x.type)==="BUY").length;
+ document.getElementById("sellCount").textContent=
+  history.filter(x=>(x.pattern||x.type)==="SELL").length;
 }
 
 function renderHistory(){
- const all=getHistory();
- const filter=document.getElementById("filter").value;
- const query=document.getElementById("search").value.toLowerCase();
+ const list=document.getElementById("historyList");
+ const search=document.getElementById("searchHistory").value.toLowerCase();
+ const filter=document.getElementById("historyFilter").value;
+ const history=getHistory();
 
- const filtered=all.filter(item=>{
-  const pattern=getPattern(item);
-  const matchFilter=filter==="ALL"||pattern===filter||item.result===filter;
-  const matchSearch=(item.date+" "+item.candleTime+" "+(item.mode||"TEST")+" "+pattern+" "+item.result).toLowerCase().includes(query);
-  return matchFilter&&matchSearch;
+ const filtered=history.filter(x=>{
+  const pattern=x.pattern||x.type||"";
+  const matchesSearch=
+   (x.date||"").toLowerCase().includes(search)||
+   pattern.toLowerCase().includes(search)||
+   (x.candleTime||"").toLowerCase().includes(search);
+  const matchesFilter=
+   filter==="ALL"||
+   pattern===filter||
+   x.result===filter;
+  return matchesSearch&&matchesFilter;
  });
 
- document.getElementById("count").textContent=filtered.length+" records shown / "+all.length+" saved";
- const box=document.getElementById("history");
- box.innerHTML="";
+ list.innerHTML="";
 
  if(filtered.length===0){
-  box.textContent="No matching history";
+  list.textContent="No History Found.";
   return;
  }
 
- filtered.forEach((item,index)=>{
-  const div=document.createElement("div");
-  div.className="history";
+ filtered.forEach(record=>{
+  const item=document.createElement("div");
+  item.className="history-item";
 
   const heading=document.createElement("strong");
-  heading.textContent=(index+1)+". "+(item.mode||"TEST")+" → "+getPattern(item)+" | "+item.result;
-  div.appendChild(heading);
+  heading.textContent=(record.pattern||record.type||"UNKNOWN")+" - "+(record.result||"UNKNOWN");
 
-  const info=document.createElement("p");
-  info.textContent="Tested: "+(item.date||"Unknown")+" | 4H Candle: "+(item.candleTime||"Not entered");
-  div.appendChild(info);
+  const details=document.createElement("p");
+  details.className="small";
+  details.textContent=
+   "Date: "+(record.date||"Unknown")+
+   " | Mode: "+(record.mode||"OLD")+
+   " | Candle Time: "+(record.candleTime||"Not entered");
 
-  const details=document.createElement("details");
-  const summary=document.createElement("summary");
-  summary.textContent="View 5 Candle Details";
-  details.appendChild(summary);
+  const deleteBtn=document.createElement("button");
+  deleteBtn.className="red";
+  deleteBtn.textContent="Delete";
+  deleteBtn.onclick=()=>deleteRecord(record.id);
 
-  const table=document.createElement("table");
-  table.innerHTML="<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
-
-  (item.candles||[]).forEach((c,i)=>{
-   const tr=document.createElement("tr");
-   [i+1,c.o,c.h,c.l,c.c].forEach(v=>{
-    const td=document.createElement("td");
-    td.textContent=v;
-    tr.appendChild(td);
-   });
-   table.appendChild(tr);
-  });
-
-  details.appendChild(table);
-  div.appendChild(details);
-
-  const del=document.createElement("button");
-  del.className="delete";
-  del.textContent="DELETE THIS RECORD";
-  del.onclick=()=>deleteRecord(item.id);
-  div.appendChild(del);
-
-  box.appendChild(div);
+  item.append(heading,details,deleteBtn);
+  list.appendChild(item);
  });
 }
 
 function deleteRecord(id){
- if(!confirm("Delete this history record?"))return;
- storeHistory(getHistory().filter(x=>x.id!==id));
- renderHistory();
- updateStats();
- show("Record deleted");
+ if(!confirm("Delete this History record?"))return;
+ const history=getHistory().filter(x=>x.id!==id);
+ if(storeHistory(history)){
+  renderHistory();
+  updateStats();
+ }
+}
+
+function clearHistory(){
+ if(!confirm("Are you sure you want to delete ALL History?"))return;
+ if(storeHistory([])){
+  renderHistory();
+  updateStats();
+  showResult("All History cleared.","info");
+ }
 }
 
 function backupHistory(){
- const history=getHistory();
- if(history.length===0){show("No history to backup");return;}
-
- const blob=new Blob([
-  JSON.stringify({app:"4H Demo Scanner",version:10,history},null,2)
- ],{type:"application/json"});
-
- const url=URL.createObjectURL(blob);
- const a=document.createElement("a");
- a.href=url;
- a.download="Candle_History_Backup_V10.json";
- document.body.appendChild(a);
- a.click();
- a.remove();
- setTimeout(()=>URL.revokeObjectURL(url),1000);
- show("Backup download started");
-}
-
-function validCandle(c){
- if(!c||typeof c!=="object")return false;
- const vals=[c.o,c.h,c.l,c.c];
- if(!vals.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
- return c.h>=Math.max(c.o,c.c)&&
-        c.l<=Math.min(c.o,c.c)&&
-        c.h>=c.l;
+ try{
+  const data={
+   version:11,
+   exportDate:new Date().toISOString(),
+   history:getHistory()
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="scanner-v11-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+ }catch(e){
+  alert("Backup failed: "+e.message);
+ }
 }
 
 function validHistoryRecord(x){
@@ -380,9 +532,17 @@ function validHistoryRecord(x){
  if(!["BUY","SELL","BOTH"].includes(pattern))return false;
  if(!["DETECTED","NOT DETECTED"].includes(x.result))return false;
  if(!Array.isArray(x.candles)||x.candles.length!==5)return false;
- if(!x.candles.every(validCandle))return false;
+
  if(pattern==="BOTH"&&x.result!=="NOT DETECTED")return false;
- return true;
+
+ return x.candles.every(c=>{
+  if(!c||typeof c!=="object")return false;
+  const values=[c.open,c.high,c.low,c.close];
+  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
+  return c.high>=Math.max(c.open,c.close)&&
+   c.low<=Math.min(c.open,c.close)&&
+   c.high>=c.low;
+ });
 }
 
 function restoreHistory(event){
@@ -390,7 +550,7 @@ function restoreHistory(event){
  if(!file)return;
 
  if(file.size>2*1024*1024){
-  show("Backup file is too large");
+  alert("File is too large. Maximum size is 2MB.");
   event.target.value="";
   return;
  }
@@ -399,52 +559,43 @@ function restoreHistory(event){
 
  reader.onload=()=>{
   try{
-   const data=JSON.parse(reader.result);
-   const incoming=Array.isArray(data)?data:data.history;
+   const parsed=JSON.parse(reader.result);
+   const incoming=Array.isArray(parsed)?parsed:parsed.history;
 
-   if(!Array.isArray(incoming)||incoming.length>1000||
-      !incoming.every(validHistoryRecord)){
-    throw new Error("Invalid backup");
+   if(!Array.isArray(incoming))throw new Error("Invalid backup file.");
+   if(incoming.length>1000)throw new Error("Too many records in backup.");
+   if(!incoming.every(validHistoryRecord)){
+    throw new Error("Backup contains invalid History records.");
    }
 
-   if(!confirm("Restore backup? This will replace current history.")){
-    event.target.value="";
-    return;
-   }
+   if(!confirm("Restore "+incoming.length+" records? Existing History will be combined."))return;
 
-   const usedIds=new Set();
-   const prepared=incoming.slice(0,100).map(x=>{
-    let id=typeof x.id==="string"&&x.id.length<150?x.id:"";
-    if(!id||usedIds.has(id)){
-     id=Date.now()+"-"+Math.random().toString(36).slice(2);
-    }
-    usedIds.add(id);
+   const existing=getHistory();
+   const combined=[...incoming,...existing];
+   const unique=[];
+   const ids=new Set();
 
-    const pattern=x.pattern||x.type;
-    return {
-     id,
-     date:typeof x.date==="string"?x.date:"Restored record",
-     candleTime:typeof x.candleTime==="string"?x.candleTime:"Not entered",
-     mode:x.mode==="AUTO"?"AUTO":"TEST",
-     pattern,
-     type:pattern,
-     result:x.result,
-     candles:x.candles.map(c=>({o:c.o,h:c.h,l:c.l,c:c.c}))
-    };
+   combined.forEach((record,index)=>{
+    let id=record.id||("restored-"+Date.now()+"-"+index);
+    if(ids.has(id))id="restored-"+Date.now()+"-"+index;
+    ids.add(id);
+    unique.push({...record,id});
    });
 
-   storeHistory(prepared);
-   renderHistory();
-   updateStats();
-   show("Backup restored successfully");
+   if(storeHistory(unique.slice(0,MAX_HISTORY))){
+    renderHistory();
+    updateStats();
+    alert("Restore successful.");
+   }
   }catch(e){
-   show("Invalid backup file. History was not changed.");
+   alert("Restore failed: "+e.message);
+  }finally{
+   event.target.value="";
   }
-  event.target.value="";
  };
 
  reader.onerror=()=>{
-  show("Could not read backup file");
+  alert("Could not read the backup file.");
   event.target.value="";
  };
 
@@ -453,114 +604,71 @@ function restoreHistory(event){
 
 function exportCSV(){
  const history=getHistory();
- if(history.length===0){show("No history to export");return;}
+ if(history.length===0){
+  alert("No History to export.");
+  return;
+ }
 
  const headers=["Date","Candle Time","Mode","Pattern","Result"];
- for(let i=1;i<=5;i++){
-  headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
- }
+ const rows=[headers];
 
- function quote(v){
-  let s=String(v??"");
-  if(/^[=+\-@\t\r]/.test(s))s="'"+s;
-  return '"'+s.replace(/"/g,'""')+'"';
- }
-
- const lines=[headers.map(quote).join(",")];
- history.forEach(item=>{
-  const row=[item.date,item.candleTime,item.mode||"TEST",getPattern(item),item.result];
-  (item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
-  lines.push(row.map(quote).join(","));
+ history.forEach(x=>{
+  rows.push([
+   x.date||"",
+   x.candleTime||"",
+   x.mode||"",
+   x.pattern||x.type||"",
+   x.result||""
+  ]);
  });
 
- const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{
-  type:"text/csv;charset=utf-8"
- });
+ const csv=rows.map(row=>
+  row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(",")
+ ).join("\n");
+
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const a=document.createElement("a");
  a.href=url;
- a.download="Candle_Demo_History_V10.csv";
- document.body.appendChild(a);
+ a.download="scanner-history.csv";
  a.click();
- a.remove();
- setTimeout(()=>URL.revokeObjectURL(url),1000);
- show("CSV EXPORT STARTED");
+ URL.revokeObjectURL(url);
 }
 
-function test(type){
- const candles=getCandles();
- if(!candles)return;
- const valid=detect(candles,type);
- show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
- saveHistory("TEST",type,valid,candles);
-}
-
-function autoTest(){
- const candles=getCandles();
- if(!candles)return;
-
- const buyDetected=detect(candles,"BUY");
- const sellDetected=detect(candles,"SELL");
-
- show("AUTO DETECTION | BUY: "+
-  (buyDetected?"DETECTED":"NOT DETECTED")+
-  " | SELL: "+(sellDetected?"DETECTED":"NOT DETECTED"));
-
- if(buyDetected)saveHistory("AUTO","BUY",true,candles);
- if(sellDetected)saveHistory("AUTO","SELL",true,candles);
- if(!buyDetected&&!sellDetected)saveHistory("AUTO","BOTH",false,candles);
-}
-
-function clearHistory(){
- if(!confirm("Delete all history? Download a backup first if needed."))return;
- try{
-  localStorage.removeItem(KEY);
-  renderHistory();
-  updateStats();
-  show("History cleared");
- }catch(e){
-  show("Could not clear history");
- }
-}
-
-renderHistory();
-updateStats();
-loadSample("SELL");
-
-/* PWA Service Worker */
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
   navigator.serviceWorker.register("./sw.js")
-  .then(()=>{
-   document.getElementById("appStatus").textContent="Offline support ready";
-  })
-  .catch(()=>{
-   document.getElementById("appStatus").textContent="Offline setup pending";
-  });
+   .then(()=>{
+    document.getElementById("appStatus").textContent="V11 Offline support ready";
+   })
+   .catch(()=>{
+    document.getElementById("appStatus").textContent="Offline setup pending";
+   });
  });
 }
 
-/* Install button */
-let installPrompt=null;
-
 window.addEventListener("beforeinstallprompt",event=>{
  event.preventDefault();
- installPrompt=event;
- document.getElementById("installBtn").style.display="block";
+ deferredInstallPrompt=event;
+ document.getElementById("installBtn").classList.remove("hidden");
 });
 
 document.getElementById("installBtn").addEventListener("click",async()=>{
- if(!installPrompt)return;
- installPrompt.prompt();
- await installPrompt.userChoice;
- installPrompt=null;
- document.getElementById("installBtn").style.display="none";
+ if(!deferredInstallPrompt)return;
+ deferredInstallPrompt.prompt();
+ await deferredInstallPrompt.userChoice;
+ deferredInstallPrompt=null;
+ document.getElementById("installBtn").classList.add("hidden");
 });
 
 window.addEventListener("appinstalled",()=>{
- document.getElementById("appStatus").textContent="App installed";
- document.getElementById("installBtn").style.display="none";
+ document.getElementById("appStatus").textContent="App installed.";
 });
+
+loadSettings();
+renderHistory();
+updateStats();
+loadSample("SELL");
 </script>
 </body>
 </html>
