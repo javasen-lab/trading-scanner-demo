@@ -1,6 +1,9 @@
 
 <!DOCTYPE html>
 <html lang="en">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#101827">
+  
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -479,6 +482,14 @@ show("History cleared");
 renderHistory();
 updateStats();
 loadSample("SELL");
+  if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("Offline support ready"))
+      .catch(err => console.log("Service worker error:", err));
+  });
+           }
+  
 </script>
 </body>
 </html>
