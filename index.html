@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101827">
 <link rel="manifest" href="./manifest.json">
-<title>4H Candle Demo Scanner V9</title>
+<title>4H Candle Demo Scanner V10</title>
 
 <style>
 *{box-sizing:border-box}
@@ -42,6 +42,9 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .bar-bg{height:15px;background:#475569;border-radius:10px;overflow:hidden;margin:7px 0}
 .bar{height:100%;width:0%;background:#22c55e}
 .bar.sellbar{background:#ef4444}
+.help{background:#263449;border-radius:8px;padding:12px;font-size:13px;color:#cbd5e1;line-height:1.6}
+input.invalid{border:2px solid #ef4444}
+button:active{opacity:.8}
 </style>
 </head>
 
@@ -49,13 +52,12 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <div class="container">
 
 <h2>4H Candle Demo Scanner</h2>
-<p class="note">V9 | Educational Demo Only</p>
+<p class="note">V10 | Educational Demo Only</p>
 
 <button class="install" id="installBtn" style="display:none">INSTALL APP</button>
 <p class="small" id="appStatus">Scanner Ready</p>
 
 <h3>Statistics Dashboard</h3>
-
 <div class="cards">
 <div class="stat"><span>TOTAL TESTS</span><strong id="total">0</strong></div>
 <div class="stat"><span>BUY DETECTED</span><strong id="buyCount">0</strong></div>
@@ -75,6 +77,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <input class="timeinput" type="datetime-local" id="candleTime">
 
 <h3>5 Candle Input</h3>
+<p class="small">All OHLC values must be greater than zero.</p>
 
 <table>
 <thead>
@@ -91,13 +94,21 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 
 <div id="result">Enter Candle Values</div>
 
+<div class="help">
+<strong>Candle Validation Rules</strong><br>
+1. All 5 candles must have Open, High, Low and Close values.<br>
+2. Values must be valid positive numbers.<br>
+3. High must be equal to or greater than Open and Close.<br>
+4. Low must be equal to or lower than Open and Close.<br>
+5. High must be equal to or greater than Low.
+</div>
+
 <h3>History Backup & Restore</h3>
 <button class="backup" onclick="backupHistory()">DOWNLOAD BACKUP</button>
 <button class="restore" onclick="document.getElementById('restoreFile').click()">RESTORE BACKUP</button>
 <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreHistory(event)">
 
 <h3>History Management</h3>
-
 <select id="filter" onchange="renderHistory()" style="width:100%">
 <option value="ALL">All History</option>
 <option value="BUY">BUY</option>
@@ -114,7 +125,6 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <button class="clear" onclick="clearHistory()">CLEAR ALL HISTORY</button>
 
 <p class="note">Educational pattern testing only. Not a real trading signal.</p>
-
 </div>
 
 <script>
@@ -135,338 +145,382 @@ const buyData=[
 const rows=document.getElementById("rows");
 
 for(let i=0;i<5;i++){
-let tr=document.createElement("tr");
-tr.innerHTML=`<td>${i+1}</td>`+
-[0,1,2,3].map(j=>
-`<td><input type="number" step="any" id="c${i}_${j}"></td>`
-).join("");
-rows.appendChild(tr);
+ const tr=document.createElement("tr");
+ tr.innerHTML=`<td>${i+1}</td>`+
+ [0,1,2,3].map(j=>
+ `<td><input type="number" min="0" step="any" id="c${i}_${j}" aria-label="Candle ${i+1} value ${j+1}"></td>`
+ ).join("");
+ rows.appendChild(tr);
 }
 
 function show(msg){
-document.getElementById("result").textContent=msg;
+ document.getElementById("result").textContent=msg;
 }
 
 function loadSample(type){
-const data=type==="SELL"?sellData:buyData;
-data.forEach((c,i)=>c.forEach((v,j)=>{
-document.getElementById(`c${i}_${j}`).value=v;
-}));
-show(type+" SAMPLE LOADED");
+ const data=type==="SELL"?sellData:buyData;
+ data.forEach((c,i)=>c.forEach((v,j)=>{
+  const input=document.getElementById(`c${i}_${j}`);
+  input.value=v;
+  input.classList.remove("invalid");
+ }));
+ show(type+" SAMPLE LOADED");
 }
 
 function getCandles(){
-const candles=[];
+ const candles=[];
+ document.querySelectorAll('input[type="number"]').forEach(x=>x.classList.remove("invalid"));
 
-for(let i=0;i<5;i++){
-let v=[0,1,2,3].map(j=>
-document.getElementById(`c${i}_${j}`).value.trim()
-);
+ for(let i=0;i<5;i++){
+  const inputs=[0,1,2,3].map(j=>document.getElementById(`c${i}_${j}`));
+  const values=inputs.map(x=>x.value.trim());
 
-if(v.some(x=>x==="")){
-show("Please fill all 5 candle values");
-return null;
-}
+  if(values.some(x=>x==="")){
+   inputs.forEach(x=>x.classList.add("invalid"));
+   show("Candle "+(i+1)+": Please fill all 4 values");
+   return null;
+  }
 
-let [o,h,l,c]=v.map(Number);
+  const nums=values.map(Number);
+  const [o,h,l,c]=nums;
 
-if(![o,h,l,c].every(Number.isFinite)||
-h<Math.max(o,c)||l>Math.min(o,c)||h<l){
-show("Invalid Candle "+(i+1));
-return null;
-}
+  if(!nums.every(Number.isFinite)||nums.some(x=>x<=0)){
+   inputs.forEach(x=>x.classList.add("invalid"));
+   show("Candle "+(i+1)+": Values must be positive valid numbers");
+   return null;
+  }
 
-candles.push({o,h,l,c});
-}
-return candles;
+  if(h<Math.max(o,c)||l>Math.min(o,c)||h<l){
+   inputs.forEach(x=>x.classList.add("invalid"));
+   show("Candle "+(i+1)+": Invalid OHLC relationship");
+   return null;
+  }
+
+  candles.push({o,h,l,c});
+ }
+ return candles;
 }
 
 function detect(candles,type){
-if(type==="SELL"){
-return candles.slice(0,3).every(x=>x.c>x.o)&&
-candles[3].c<candles[3].o&&
-candles[4].c<candles[4].o&&
-candles[4].l<candles[3].l;
-}
+ if(type==="SELL"){
+  return candles.slice(0,3).every(x=>x.c>x.o)&&
+   candles[3].c<candles[3].o&&
+   candles[4].c<candles[4].o&&
+   candles[4].l<candles[3].l;
+ }
 
-return candles.slice(0,3).every(x=>x.c<x.o)&&
-candles[3].c>candles[3].o&&
-candles[4].c>candles[4].o&&
-candles[4].h>candles[3].h;
+ return candles.slice(0,3).every(x=>x.c<x.o)&&
+  candles[3].c>candles[3].o&&
+  candles[4].c>candles[4].o&&
+  candles[4].h>candles[3].h;
 }
 
 function getHistory(){
-try{
-const data=JSON.parse(localStorage.getItem(KEY)||"[]");
-return Array.isArray(data)?data:[];
-}catch(e){
-return [];
-}
+ try{
+  const data=JSON.parse(localStorage.getItem(KEY)||"[]");
+  return Array.isArray(data)?data:[];
+ }catch(e){
+  return [];
+ }
 }
 
 function storeHistory(data){
-localStorage.setItem(KEY,JSON.stringify(data));
+ localStorage.setItem(KEY,JSON.stringify(data));
 }
 
 function getPattern(item){
-return item.pattern||item.type||"UNKNOWN";
+ return item.pattern||item.type||"UNKNOWN";
 }
 
 function saveHistory(mode,pattern,result,candles){
-try{
-const history=getHistory();
-
-const record={
-id:Date.now()+"-"+Math.random().toString(36).slice(2),
-date:new Date().toLocaleString(),
-candleTime:document.getElementById("candleTime").value||"Not entered",
-mode:mode,
-pattern:pattern,
-type:pattern,
-result:result?"DETECTED":"NOT DETECTED",
-candles:candles.map(x=>({...x}))
-};
-
-history.unshift(record);
-storeHistory(history.slice(0,100));
-renderHistory();
-updateStats();
-}catch(e){
-show("Storage unavailable. Could not save.");
-}
+ try{
+  const history=getHistory();
+  const record={
+   id:Date.now()+"-"+Math.random().toString(36).slice(2),
+   date:new Date().toLocaleString(),
+   candleTime:document.getElementById("candleTime").value||"Not entered",
+   mode,
+   pattern,
+   type:pattern,
+   result:result?"DETECTED":"NOT DETECTED",
+   candles:candles.map(x=>({...x}))
+  };
+  storeHistory([record,...history].slice(0,100));
+  renderHistory();
+  updateStats();
+ }catch(e){
+  show("Storage unavailable. Could not save history.");
+ }
 }
 
 function updateStats(){
-const h=getHistory();
+ const h=getHistory();
+ const buy=h.filter(x=>getPattern(x)==="BUY"&&x.result==="DETECTED").length;
+ const sell=h.filter(x=>getPattern(x)==="SELL"&&x.result==="DETECTED").length;
+ const miss=h.filter(x=>x.result==="NOT DETECTED").length;
+ const total=h.length;
+ const detected=buy+sell;
+ const sum=detected||1;
+ const bp=Math.round(buy/sum*100);
+ const sp=Math.round(sell/sum*100);
 
-const buy=h.filter(x=>getPattern(x)==="BUY"&&x.result==="DETECTED").length;
-const sell=h.filter(x=>getPattern(x)==="SELL"&&x.result==="DETECTED").length;
-const miss=h.filter(x=>x.result==="NOT DETECTED").length;
-
-const total=h.length;
-const detected=buy+sell;
-const sum=detected||1;
-
-const bp=Math.round(buy/sum*100);
-const sp=Math.round(sell/sum*100);
-
-document.getElementById("total").textContent=total;
-document.getElementById("buyCount").textContent=buy;
-document.getElementById("sellCount").textContent=sell;
-document.getElementById("missCount").textContent=miss;
-document.getElementById("buyBar").style.width=bp+"%";
-document.getElementById("sellBar").style.width=sp+"%";
-document.getElementById("percentages").textContent="BUY "+bp+"% | SELL "+sp+"%";
-document.getElementById("distribution").textContent=detected+" detected patterns";
+ document.getElementById("total").textContent=total;
+ document.getElementById("buyCount").textContent=buy;
+ document.getElementById("sellCount").textContent=sell;
+ document.getElementById("missCount").textContent=miss;
+ document.getElementById("buyBar").style.width=bp+"%";
+ document.getElementById("sellBar").style.width=sp+"%";
+ document.getElementById("percentages").textContent="BUY "+bp+"% | SELL "+sp+"%";
+ document.getElementById("distribution").textContent=detected+" detected patterns";
 }
 
 function renderHistory(){
-const all=getHistory();
-const filter=document.getElementById("filter").value;
-const query=document.getElementById("search").value.toLowerCase();
+ const all=getHistory();
+ const filter=document.getElementById("filter").value;
+ const query=document.getElementById("search").value.toLowerCase();
 
-const filtered=all.filter(item=>{
-const pattern=getPattern(item);
-const matchFilter=filter==="ALL"||pattern===filter||item.result===filter;
-const matchSearch=(item.date+" "+item.candleTime+" "+(item.mode||"TEST")+" "+pattern+" "+item.result).toLowerCase().includes(query);
-return matchFilter&&matchSearch;
-});
+ const filtered=all.filter(item=>{
+  const pattern=getPattern(item);
+  const matchFilter=filter==="ALL"||pattern===filter||item.result===filter;
+  const matchSearch=(item.date+" "+item.candleTime+" "+(item.mode||"TEST")+" "+pattern+" "+item.result).toLowerCase().includes(query);
+  return matchFilter&&matchSearch;
+ });
 
-document.getElementById("count").textContent=filtered.length+" records shown / "+all.length+" saved";
+ document.getElementById("count").textContent=filtered.length+" records shown / "+all.length+" saved";
+ const box=document.getElementById("history");
+ box.innerHTML="";
 
-const box=document.getElementById("history");
-box.innerHTML="";
+ if(filtered.length===0){
+  box.textContent="No matching history";
+  return;
+ }
 
-if(filtered.length===0){
-box.textContent="No matching history";
-return;
-}
+ filtered.forEach((item,index)=>{
+  const div=document.createElement("div");
+  div.className="history";
 
-filtered.forEach((item,index)=>{
-const div=document.createElement("div");
-div.className="history";
+  const heading=document.createElement("strong");
+  heading.textContent=(index+1)+". "+(item.mode||"TEST")+" → "+getPattern(item)+" | "+item.result;
+  div.appendChild(heading);
 
-const heading=document.createElement("strong");
-heading.textContent=(index+1)+". "+(item.mode||"TEST")+" → "+getPattern(item)+" | "+item.result;
-div.appendChild(heading);
+  const info=document.createElement("p");
+  info.textContent="Tested: "+(item.date||"Unknown")+" | 4H Candle: "+(item.candleTime||"Not entered");
+  div.appendChild(info);
 
-const info=document.createElement("p");
-info.textContent="Tested: "+item.date+" | 4H Candle: "+(item.candleTime||"Not entered");
-div.appendChild(info);
+  const details=document.createElement("details");
+  const summary=document.createElement("summary");
+  summary.textContent="View 5 Candle Details";
+  details.appendChild(summary);
 
-const details=document.createElement("details");
-const summary=document.createElement("summary");
-summary.textContent="View 5 Candle Details";
-details.appendChild(summary);
+  const table=document.createElement("table");
+  table.innerHTML="<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
 
-const table=document.createElement("table");
-table.innerHTML="<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
+  (item.candles||[]).forEach((c,i)=>{
+   const tr=document.createElement("tr");
+   [i+1,c.o,c.h,c.l,c.c].forEach(v=>{
+    const td=document.createElement("td");
+    td.textContent=v;
+    tr.appendChild(td);
+   });
+   table.appendChild(tr);
+  });
 
-(item.candles||[]).forEach((c,i)=>{
-const tr=document.createElement("tr");
-[i+1,c.o,c.h,c.l,c.c].forEach(v=>{
-const td=document.createElement("td");
-td.textContent=v;
-tr.appendChild(td);
-});
-table.appendChild(tr);
-});
+  details.appendChild(table);
+  div.appendChild(details);
 
-details.appendChild(table);
-div.appendChild(details);
+  const del=document.createElement("button");
+  del.className="delete";
+  del.textContent="DELETE THIS RECORD";
+  del.onclick=()=>deleteRecord(item.id);
+  div.appendChild(del);
 
-const del=document.createElement("button");
-del.className="delete";
-del.textContent="DELETE THIS RECORD";
-del.onclick=()=>deleteRecord(item.id);
-div.appendChild(del);
-
-box.appendChild(div);
-});
+  box.appendChild(div);
+ });
 }
 
 function deleteRecord(id){
-if(!confirm("Delete this history record?"))return;
-storeHistory(getHistory().filter(x=>x.id!==id));
-renderHistory();
-updateStats();
-show("Record deleted");
+ if(!confirm("Delete this history record?"))return;
+ storeHistory(getHistory().filter(x=>x.id!==id));
+ renderHistory();
+ updateStats();
+ show("Record deleted");
 }
 
 function backupHistory(){
-const history=getHistory();
-if(history.length===0){show("No history to backup");return;}
+ const history=getHistory();
+ if(history.length===0){show("No history to backup");return;}
 
-const blob=new Blob(
-[JSON.stringify({app:"4H Demo Scanner",version:9,history:history},null,2)],
-{type:"application/json"}
-);
+ const blob=new Blob([
+  JSON.stringify({app:"4H Demo Scanner",version:10,history},null,2)
+ ],{type:"application/json"});
 
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download="Candle_History_Backup.json";
-document.body.appendChild(a);
-a.click();
-a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),1000);
-show("Backup download started");
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="Candle_History_Backup_V10.json";
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ show("Backup download started");
+}
+
+function validCandle(c){
+ if(!c||typeof c!=="object")return false;
+ const vals=[c.o,c.h,c.l,c.c];
+ if(!vals.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
+ return c.h>=Math.max(c.o,c.c)&&
+        c.l<=Math.min(c.o,c.c)&&
+        c.h>=c.l;
+}
+
+function validHistoryRecord(x){
+ if(!x||typeof x!=="object")return false;
+ const pattern=x.pattern||x.type;
+ if(!["BUY","SELL","BOTH"].includes(pattern))return false;
+ if(!["DETECTED","NOT DETECTED"].includes(x.result))return false;
+ if(!Array.isArray(x.candles)||x.candles.length!==5)return false;
+ if(!x.candles.every(validCandle))return false;
+ if(pattern==="BOTH"&&x.result!=="NOT DETECTED")return false;
+ return true;
 }
 
 function restoreHistory(event){
-const file=event.target.files[0];
-if(!file)return;
+ const file=event.target.files[0];
+ if(!file)return;
 
-const reader=new FileReader();
+ if(file.size>2*1024*1024){
+  show("Backup file is too large");
+  event.target.value="";
+  return;
+ }
 
-reader.onload=()=>{
-try{
-const data=JSON.parse(reader.result);
-const incoming=Array.isArray(data)?data:data.history;
+ const reader=new FileReader();
 
-if(!Array.isArray(incoming)||incoming.length>1000||
-!incoming.every(x=>x&&typeof x==="object"&&
-typeof x.type==="string"&&
-typeof x.result==="string"&&
-Array.isArray(x.candles)&&x.candles.length===5)){
-throw new Error("Invalid backup");
-}
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(reader.result);
+   const incoming=Array.isArray(data)?data:data.history;
 
-if(!confirm("Restore backup? This will replace current history.")){
-event.target.value="";
-return;
-}
+   if(!Array.isArray(incoming)||incoming.length>1000||
+      !incoming.every(validHistoryRecord)){
+    throw new Error("Invalid backup");
+   }
 
-const prepared=incoming.slice(0,100).map(x=>({
-...x,
-id:x.id||Date.now()+"-"+Math.random().toString(36).slice(2),
-mode:x.mode||"TEST",
-pattern:x.pattern||x.type
-}));
+   if(!confirm("Restore backup? This will replace current history.")){
+    event.target.value="";
+    return;
+   }
 
-storeHistory(prepared);
-renderHistory();
-updateStats();
-show("Backup restored successfully");
+   const usedIds=new Set();
+   const prepared=incoming.slice(0,100).map(x=>{
+    let id=typeof x.id==="string"&&x.id.length<150?x.id:"";
+    if(!id||usedIds.has(id)){
+     id=Date.now()+"-"+Math.random().toString(36).slice(2);
+    }
+    usedIds.add(id);
 
-}catch(e){
-show("Invalid backup file");
-}
+    const pattern=x.pattern||x.type;
+    return {
+     id,
+     date:typeof x.date==="string"?x.date:"Restored record",
+     candleTime:typeof x.candleTime==="string"?x.candleTime:"Not entered",
+     mode:x.mode==="AUTO"?"AUTO":"TEST",
+     pattern,
+     type:pattern,
+     result:x.result,
+     candles:x.candles.map(c=>({o:c.o,h:c.h,l:c.l,c:c.c}))
+    };
+   });
 
-event.target.value="";
-};
+   storeHistory(prepared);
+   renderHistory();
+   updateStats();
+   show("Backup restored successfully");
+  }catch(e){
+   show("Invalid backup file. History was not changed.");
+  }
+  event.target.value="";
+ };
 
-reader.readAsText(file);
+ reader.onerror=()=>{
+  show("Could not read backup file");
+  event.target.value="";
+ };
+
+ reader.readAsText(file);
 }
 
 function exportCSV(){
-const history=getHistory();
-if(history.length===0){show("No history to export");return;}
+ const history=getHistory();
+ if(history.length===0){show("No history to export");return;}
 
-const headers=["Date","Candle Time","Mode","Pattern","Result"];
+ const headers=["Date","Candle Time","Mode","Pattern","Result"];
+ for(let i=1;i<=5;i++){
+  headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
+ }
 
-for(let i=1;i<=5;i++){
-headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
-}
+ function quote(v){
+  let s=String(v??"");
+  if(/^[=+\-@\t\r]/.test(s))s="'"+s;
+  return '"'+s.replace(/"/g,'""')+'"';
+ }
 
-function quote(v){
-return '"'+String(v??"").replace(/"/g,'""')+'"';
-}
+ const lines=[headers.map(quote).join(",")];
+ history.forEach(item=>{
+  const row=[item.date,item.candleTime,item.mode||"TEST",getPattern(item),item.result];
+  (item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
+  lines.push(row.map(quote).join(","));
+ });
 
-const lines=[headers.map(quote).join(",")];
-
-history.forEach(item=>{
-const row=[item.date,item.candleTime,item.mode||"TEST",getPattern(item),item.result];
-(item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
-lines.push(row.map(quote).join(","));
-});
-
-const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{
-type:"text/csv;charset=utf-8"
-});
-
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download="Candle_Demo_History.csv";
-document.body.appendChild(a);
-a.click();
-a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),1000);
-show("CSV EXPORT STARTED");
+ const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{
+  type:"text/csv;charset=utf-8"
+ });
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="Candle_Demo_History_V10.csv";
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ show("CSV EXPORT STARTED");
 }
 
 function test(type){
-const candles=getCandles();
-if(!candles)return;
-
-const valid=detect(candles,type);
-show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
-saveHistory("TEST",type,valid,candles);
+ const candles=getCandles();
+ if(!candles)return;
+ const valid=detect(candles,type);
+ show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
+ saveHistory("TEST",type,valid,candles);
 }
 
 function autoTest(){
-const candles=getCandles();
-if(!candles)return;
+ const candles=getCandles();
+ if(!candles)return;
 
-const buyDetected=detect(candles,"BUY");
-const sellDetected=detect(candles,"SELL");
+ const buyDetected=detect(candles,"BUY");
+ const sellDetected=detect(candles,"SELL");
 
-show("AUTO DETECTION | BUY: "+
-(buyDetected?"DETECTED":"NOT DETECTED")+
-" | SELL: "+(sellDetected?"DETECTED":"NOT DETECTED"));
+ show("AUTO DETECTION | BUY: "+
+  (buyDetected?"DETECTED":"NOT DETECTED")+
+  " | SELL: "+(sellDetected?"DETECTED":"NOT DETECTED"));
 
-if(buyDetected)saveHistory("AUTO","BUY",true,candles);
-if(sellDetected)saveHistory("AUTO","SELL",true,candles);
-if(!buyDetected&&!sellDetected)saveHistory("AUTO","BOTH",false,candles);
+ if(buyDetected)saveHistory("AUTO","BUY",true,candles);
+ if(sellDetected)saveHistory("AUTO","SELL",true,candles);
+ if(!buyDetected&&!sellDetected)saveHistory("AUTO","BOTH",false,candles);
 }
 
 function clearHistory(){
-if(!confirm("Delete all history? Download a backup first if needed."))return;
-localStorage.removeItem(KEY);
-renderHistory();
-updateStats();
-show("History cleared");
+ if(!confirm("Delete all history? Download a backup first if needed."))return;
+ try{
+  localStorage.removeItem(KEY);
+  renderHistory();
+  updateStats();
+  show("History cleared");
+ }catch(e){
+  show("Could not clear history");
+ }
 }
 
 renderHistory();
@@ -475,37 +529,37 @@ loadSample("SELL");
 
 /* PWA Service Worker */
 if("serviceWorker" in navigator){
-window.addEventListener("load",()=>{
-navigator.serviceWorker.register("./sw.js")
-.then(()=>{
-document.getElementById("appStatus").textContent="Offline support ready";
-})
-.catch(()=>{
-document.getElementById("appStatus").textContent="Offline setup pending";
-});
-});
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("./sw.js")
+  .then(()=>{
+   document.getElementById("appStatus").textContent="Offline support ready";
+  })
+  .catch(()=>{
+   document.getElementById("appStatus").textContent="Offline setup pending";
+  });
+ });
 }
 
 /* Install button */
 let installPrompt=null;
 
 window.addEventListener("beforeinstallprompt",event=>{
-event.preventDefault();
-installPrompt=event;
-document.getElementById("installBtn").style.display="block";
+ event.preventDefault();
+ installPrompt=event;
+ document.getElementById("installBtn").style.display="block";
 });
 
 document.getElementById("installBtn").addEventListener("click",async()=>{
-if(!installPrompt)return;
-installPrompt.prompt();
-await installPrompt.userChoice;
-installPrompt=null;
-document.getElementById("installBtn").style.display="none";
+ if(!installPrompt)return;
+ installPrompt.prompt();
+ await installPrompt.userChoice;
+ installPrompt=null;
+ document.getElementById("installBtn").style.display="none";
 });
 
 window.addEventListener("appinstalled",()=>{
-document.getElementById("appStatus").textContent="App installed";
-document.getElementById("installBtn").style.display="none";
+ document.getElementById("appStatus").textContent="App installed";
+ document.getElementById("installBtn").style.display="none";
 });
 </script>
 </body>
