@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4H Candle Scanner Demo</title>
+<style>
+body {
+  background:#101827;
+  color:white;
+  font-family:Arial,sans-serif;
+  padding:20px;
+  text-align:center;
+}
+h2 {color:#60a5fa;}
+.card {
+  background:#1e293b;
+  padding:20px;
+  margin:15px 0;
+  border-radius:12px;
+}
+button {
+  width:100%;
+  padding:15px;
+  margin:8px 0;
+  border:0;
+  border-radius:8px;
+  font-size:16px;
+  color:white;
+  font-weight:bold;
+}
+.sell {background:#dc3545;}
+.buy {background:#16a34a;}
+#result {
+  margin-top:20px;
+  padding:15px;
+  background:#334155;
+  border-radius:10px;
+  line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<h2>4H CANDLE SCANNER</h2>
+<p>Educational Pattern Testing</p>
+
+<div class="card">
+<h3>SELL Pattern</h3>
+<p>3 Green + 2 Red Candles</p>
+<button class="sell" onclick="testSell()">
+TEST SELL PATTERN
+</button>
+</div>
+
+<div class="card">
+<h3>BUY Pattern</h3>
+<p>3 Red + 2 Green Candles</p>
+<button class="buy" onclick="testBuy()">
+TEST BUY PATTERN
+</button>
+</div>
+
+<div id="result">
+Waiting for test...
+</div>
+
+<script>
+function testSell() {
+  const candles = [
+    {o:10,h:12,l:9,c:11},
+    {o:11,h:13,l:10,c:12},
+    {o:12,h:14,l:11,c:13},
+    {o:13,h:14,l:11,c:12},
+    {o:12,h:13,l:10,c:11}
+  ];
+
+  const greens = candles.slice(0,3)
+    .every(x => x.c > x.o);
+  const red1 = candles[3].c < candles[3].o;
+  const red2 = candles[4].c < candles[4].o;
+  const broken = candles[4].l < candles[3].l;
+
+  showResult(greens && red1 && red2 && broken,
+    "SELL");
+}
+
+function testBuy() {
+  const candles = [
+    {o:13,h:14,l:11,c:12},
+    {o:12,h:13,l:10,c:11},
+    {o:11,h:12,l:9,c:10},
+    {o:10,h:13,l:9,c:12},
+    {o:12,h:14,l:10,c:13}
+  ];
+
+  const reds = candles.slice(0,3)
+    .every(x => x.c < x.o);
+  const green1 = candles[3].c > candles[3].o;
+  const green2 = candles[4].c > candles[4].o;
+  const broken = candles[4].h > candles[3].h;
+
+  showResult(reds && green1 && green2 && broken,
+    "BUY");
+}
+
+function showResult(valid,type) {
+  const result = document.getElementById("result");
+
+  if(valid) {
+    result.innerHTML =
+      "SUCCESS!<br>" + type +
+      " Pattern Detected<br>Demo Test Passed";
+  } else {
+    result.innerHTML =
+      "Pattern Not Detected";
+  }
+}
+</script>
+
+</body>
+</html>
