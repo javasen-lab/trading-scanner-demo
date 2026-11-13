@@ -1,0 +1,20 @@
+
+{
+  "name": "4H Candle Demo Scanner",
+  "short_name": "4H Scanner",
+  "description": "Educational Candle Pattern Demo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101827",
+  "theme_color": "#101827",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
