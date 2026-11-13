@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4H Demo Scanner V6</title>
+<title>4H Demo Scanner V7</title>
 <style>
 body{background:#101827;color:white;font-family:Arial;padding:12px;margin:0}
 .container{max-width:700px;margin:auto}
@@ -23,6 +23,9 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .blue{background:#2563eb;width:98%}
 .clear{background:#64748b;width:98%}
 .export{background:#0f766e;width:98%}
+.backup{background:#7c3aed;width:98%}
+.restore{background:#0369a1;width:98%}
+.delete{background:#991b1b;width:auto;padding:7px 12px}
 #result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .stat{background:#263449;padding:15px 8px;border-radius:9px;text-align:center}
@@ -41,10 +44,9 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <div class="container">
 
 <h2>4H Candle Demo Scanner</h2>
-<p class="note">V6 | Educational Demo Only</p>
+<p class="note">V7 | Educational Demo Only</p>
 
 <h3>Statistics Dashboard</h3>
-
 <div class="cards">
 <div class="stat"><span>TOTAL TESTS</span><strong id="total">0</strong></div>
 <div class="stat"><span>BUY DETECTED</span><strong id="buyCount">0</strong></div>
@@ -79,9 +81,12 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 
 <div id="result">Enter Candle Values</div>
 
-<h3>History Management</h3>
+<h3>History Backup & Restore</h3>
+<button class="backup" onclick="backupHistory()">DOWNLOAD BACKUP</button>
+<button class="restore" onclick="document.getElementById('restoreFile').click()">RESTORE BACKUP</button>
+<input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreHistory(event)">
 
-<div class="filters">
+<h3>History Management</h3>
 <select id="filter" onchange="renderHistory()">
 <option value="ALL">All History</option>
 <option value="BUY">BUY</option>
@@ -89,12 +94,10 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <option value="DETECTED">Detected</option>
 <option value="NOT DETECTED">Not Detected</option>
 </select>
-</div>
 
 <input class="search" id="search" placeholder="Search history..." oninput="renderHistory()">
 
 <button class="export" onclick="exportCSV()">EXPORT HISTORY CSV</button>
-
 <p class="small" id="count">0 records</p>
 <div id="history">No history yet</div>
 <button class="clear" onclick="clearHistory()">CLEAR ALL HISTORY</button>
@@ -102,20 +105,16 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 </div>
 
 <script>
+const KEY="demoPatternHistory";
+
 const sellData=[
-[10,12,9,11],
-[11,13,10,12],
-[12,14,11,13],
-[13,14,11,12],
-[12,13,10,11]
+[10,12,9,11],[11,13,10,12],[12,14,11,13],
+[13,14,11,12],[12,13,10,11]
 ];
 
 const buyData=[
-[13,14,11,12],
-[12,13,10,11],
-[11,12,9,10],
-[10,13,9,12],
-[12,14,10,13]
+[13,14,11,12],[12,13,10,11],[11,12,9,10],
+[10,13,9,12],[12,14,10,13]
 ];
 
 const rows=document.getElementById("rows");
@@ -130,7 +129,7 @@ rows.appendChild(tr);
 }
 
 function show(msg){
-document.getElementById("result").innerHTML=msg;
+document.getElementById("result").textContent=msg;
 }
 
 function loadSample(type){
@@ -177,14 +176,19 @@ candles[4].h>candles[3].h;
 
 function getHistory(){
 try{
-const data=JSON.parse(localStorage.getItem("demoPatternHistory")||"[]");
+const data=JSON.parse(localStorage.getItem(KEY)||"[]");
 return Array.isArray(data)?data:[];
 }catch(e){return [];}
+}
+
+function storeHistory(data){
+localStorage.setItem(KEY,JSON.stringify(data));
 }
 
 function saveHistory(type,success,candles){
 const history=getHistory();
 history.unshift({
+id:Date.now()+"-"+Math.random().toString(36).slice(2),
 date:new Date().toLocaleString(),
 candleTime:document.getElementById("candleTime").value||"Not entered",
 type:type,
@@ -192,29 +196,27 @@ result:success?"DETECTED":"NOT DETECTED",
 candles:candles.map(x=>({...x}))
 });
 try{
-localStorage.setItem("demoPatternHistory",JSON.stringify(history.slice(0,100)));
+storeHistory(history.slice(0,100));
 renderHistory();
 updateStats();
-}catch(e){show("Browser storage unavailable");}
+}catch(e){show("Storage unavailable. Could not save.");}
 }
 
 function updateStats(){
 const h=getHistory();
-const total=h.length;
 const buy=h.filter(x=>x.type==="BUY"&&x.result==="DETECTED").length;
 const sell=h.filter(x=>x.type==="SELL"&&x.result==="DETECTED").length;
 const miss=h.filter(x=>x.result==="NOT DETECTED").length;
+const total=h.length;
 const detected=buy+sell;
-const distribution=buy+sell;
+const sum=detected||1;
+const bp=Math.round(buy/sum*100);
+const sp=Math.round(sell/sum*100);
 
 document.getElementById("total").textContent=total;
 document.getElementById("buyCount").textContent=buy;
 document.getElementById("sellCount").textContent=sell;
 document.getElementById("missCount").textContent=miss;
-
-const bp=distribution?Math.round(buy/distribution*100):0;
-const sp=distribution?Math.round(sell/distribution*100):0;
-
 document.getElementById("buyBar").style.width=bp+"%";
 document.getElementById("sellBar").style.width=sp+"%";
 document.getElementById("percentages").textContent=
@@ -229,8 +231,10 @@ const filter=document.getElementById("filter").value;
 const query=document.getElementById("search").value.toLowerCase();
 
 const filtered=all.filter(item=>{
-const matchFilter=filter==="ALL"||item.type===filter||item.result===filter;
-const matchSearch=(item.date+" "+item.candleTime+" "+item.type+" "+item.result).toLowerCase().includes(query);
+const matchFilter=filter==="ALL"||
+item.type===filter||item.result===filter;
+const matchSearch=(item.date+" "+item.candleTime+" "+
+item.type+" "+item.result).toLowerCase().includes(query);
 return matchFilter&&matchSearch;
 });
 
@@ -254,7 +258,8 @@ heading.textContent=(index+1)+". "+item.type+" | "+item.result;
 div.appendChild(heading);
 
 const info=document.createElement("p");
-info.textContent="Tested: "+item.date+" | 4H Candle: "+item.candleTime;
+info.textContent="Tested: "+item.date+
+" | 4H Candle: "+item.candleTime;
 div.appendChild(info);
 
 const details=document.createElement("details");
@@ -277,8 +282,73 @@ table.appendChild(tr);
 
 details.appendChild(table);
 div.appendChild(details);
+
+const del=document.createElement("button");
+del.className="delete";
+del.textContent="DELETE THIS RECORD";
+del.onclick=()=>deleteRecord(item.id);
+div.appendChild(del);
+
 box.appendChild(div);
 });
+}
+
+function deleteRecord(id){
+if(!confirm("Delete this history record?"))return;
+storeHistory(getHistory().filter(x=>x.id!==id));
+renderHistory();
+updateStats();
+show("Record deleted");
+}
+
+function backupHistory(){
+const history=getHistory();
+if(history.length===0){show("No history to backup");return;}
+const blob=new Blob(
+[JSON.stringify({app:"4H Demo Scanner",version:7,history:history},null,2)],
+{type:"application/json"}
+);
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download="Candle_History_Backup.json";
+document.body.appendChild(a);
+a.click();
+a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+show("Backup download started");
+}
+
+function restoreHistory(event){
+const file=event.target.files[0];
+if(!file)return;
+
+const reader=new FileReader();
+reader.onload=()=>{
+try{
+const data=JSON.parse(reader.result);
+const incoming=Array.isArray(data)?data:data.history;
+
+if(!Array.isArray(incoming)||incoming.length>1000||
+!incoming.every(x=>x&&typeof x==="object"&&
+typeof x.type==="string"&&
+typeof x.result==="string"&&
+Array.isArray(x.candles)&&x.candles.length===5)){
+throw new Error("Invalid backup");
+}
+
+if(!confirm("Restore backup? This will replace current history."))return;
+
+storeHistory(incoming.slice(0,100));
+renderHistory();
+updateStats();
+show("Backup restored successfully");
+}catch(e){
+show("Invalid backup file");
+}
+event.target.value="";
+};
+reader.readAsText(file);
 }
 
 function exportCSV(){
@@ -290,7 +360,9 @@ for(let i=1;i<=5;i++){
 headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
 }
 
-function quote(v){return '"'+String(v??"").replace(/"/g,'""')+'"';}
+function quote(v){
+return '"'+String(v??"").replace(/"/g,'""')+'"';
+}
 
 const lines=[headers.map(quote).join(",")];
 history.forEach(item=>{
@@ -299,14 +371,16 @@ const row=[item.date,item.candleTime,item.type,item.result];
 lines.push(row.map(quote).join(","));
 });
 
-const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{
+type:"text/csv;charset=utf-8"
+});
 const url=URL.createObjectURL(blob);
-const link=document.createElement("a");
-link.href=url;
-link.download="Candle_Demo_History.csv";
-document.body.appendChild(link);
-link.click();
-link.remove();
+const a=document.createElement("a");
+a.href=url;
+a.download="Candle_Demo_History.csv";
+document.body.appendChild(a);
+a.click();
+a.remove();
 setTimeout(()=>URL.revokeObjectURL(url),1000);
 show("CSV EXPORT STARTED");
 }
@@ -325,8 +399,8 @@ if(!candles)return;
 const buy=detect(candles,"BUY");
 const sell=detect(candles,"SELL");
 
-show("AUTO DETECTION<br>BUY: "+(buy?"DETECTED":"NOT DETECTED")+
-"<br>SELL: "+(sell?"DETECTED":"NOT DETECTED"));
+show("AUTO DETECTION | BUY: "+(buy?"DETECTED":"NOT DETECTED")+
+" | SELL: "+(sell?"DETECTED":"NOT DETECTED"));
 
 if(buy)saveHistory("BUY",true,candles);
 if(sell)saveHistory("SELL",true,candles);
@@ -334,11 +408,11 @@ if(!buy&&!sell)saveHistory("BOTH",false,candles);
 }
 
 function clearHistory(){
-if(!confirm("Delete all saved history?"))return;
-localStorage.removeItem("demoPatternHistory");
+if(!confirm("Delete all history? Download a backup first if needed."))return;
+localStorage.removeItem(KEY);
 renderHistory();
 updateStats();
-show("History Cleared");
+show("History cleared");
 }
 
 renderHistory();
