@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4H Demo Scanner V7</title>
+<title>4H Demo Scanner V8</title>
 <style>
 body{background:#101827;color:white;font-family:Arial;padding:12px;margin:0}
 .container{max-width:700px;margin:auto}
@@ -26,7 +26,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .backup{background:#7c3aed;width:98%}
 .restore{background:#0369a1;width:98%}
 .delete{background:#991b1b;width:auto;padding:7px 12px}
-#result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold}
+#result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold;overflow-wrap:anywhere}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 .stat{background:#263449;padding:15px 8px;border-radius:9px;text-align:center}
 .stat strong{display:block;font-size:25px;margin-top:7px}
@@ -44,7 +44,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <div class="container">
 
 <h2>4H Candle Demo Scanner</h2>
-<p class="note">V7 | Educational Demo Only</p>
+<p class="note">V8 | Educational Demo Only</p>
 
 <h3>Statistics Dashboard</h3>
 <div class="cards">
@@ -185,31 +185,49 @@ function storeHistory(data){
 localStorage.setItem(KEY,JSON.stringify(data));
 }
 
-function saveHistory(type,success,candles){
+/* V8: Explicitly separate test mode and detected pattern */
+function saveHistory(mode,pattern,result,candles){
+try{
 const history=getHistory();
-history.unshift({
+
+const record={
 id:Date.now()+"-"+Math.random().toString(36).slice(2),
 date:new Date().toLocaleString(),
 candleTime:document.getElementById("candleTime").value||"Not entered",
-type:type,
-result:success?"DETECTED":"NOT DETECTED",
+mode:mode,
+pattern:pattern,
+type:pattern,
+result:result?"DETECTED":"NOT DETECTED",
 candles:candles.map(x=>({...x}))
-});
-try{
+};
+
+history.unshift(record);
 storeHistory(history.slice(0,100));
 renderHistory();
 updateStats();
-}catch(e){show("Storage unavailable. Could not save.");}
+}catch(e){
+show("Storage unavailable. Could not save.");
+}
+}
+
+function getPattern(item){
+return item.pattern||item.type||"UNKNOWN";
 }
 
 function updateStats(){
 const h=getHistory();
-const buy=h.filter(x=>x.type==="BUY"&&x.result==="DETECTED").length;
-const sell=h.filter(x=>x.type==="SELL"&&x.result==="DETECTED").length;
+
+const buy=h.filter(x=>
+getPattern(x)==="BUY"&&x.result==="DETECTED").length;
+
+const sell=h.filter(x=>
+getPattern(x)==="SELL"&&x.result==="DETECTED").length;
+
 const miss=h.filter(x=>x.result==="NOT DETECTED").length;
 const total=h.length;
 const detected=buy+sell;
 const sum=detected||1;
+
 const bp=Math.round(buy/sum*100);
 const sp=Math.round(sell/sum*100);
 
@@ -231,10 +249,15 @@ const filter=document.getElementById("filter").value;
 const query=document.getElementById("search").value.toLowerCase();
 
 const filtered=all.filter(item=>{
+const pattern=getPattern(item);
 const matchFilter=filter==="ALL"||
-item.type===filter||item.result===filter;
-const matchSearch=(item.date+" "+item.candleTime+" "+
-item.type+" "+item.result).toLowerCase().includes(query);
+pattern===filter||item.result===filter;
+
+const matchSearch=(
+item.date+" "+item.candleTime+" "+
+(item.mode||"TEST")+" "+pattern+" "+item.result
+).toLowerCase().includes(query);
+
 return matchFilter&&matchSearch;
 });
 
@@ -253,13 +276,16 @@ filtered.forEach((item,index)=>{
 const div=document.createElement("div");
 div.className="history";
 
+const pattern=getPattern(item);
+const mode=item.mode||"TEST";
+
 const heading=document.createElement("strong");
-heading.textContent=(index+1)+". "+item.type+" | "+item.result;
+heading.textContent=(index+1)+". "+mode+" → "+pattern+" | "+item.result;
 div.appendChild(heading);
 
 const info=document.createElement("p");
 info.textContent="Tested: "+item.date+
-" | 4H Candle: "+item.candleTime;
+" | 4H Candle: "+(item.candleTime||"Not entered");
 div.appendChild(info);
 
 const details=document.createElement("details");
@@ -304,10 +330,12 @@ show("Record deleted");
 function backupHistory(){
 const history=getHistory();
 if(history.length===0){show("No history to backup");return;}
+
 const blob=new Blob(
-[JSON.stringify({app:"4H Demo Scanner",version:7,history:history},null,2)],
+[JSON.stringify({app:"4H Demo Scanner",version:8,history:history},null,2)],
 {type:"application/json"}
 );
+
 const url=URL.createObjectURL(blob);
 const a=document.createElement("a");
 a.href=url;
@@ -324,6 +352,7 @@ const file=event.target.files[0];
 if(!file)return;
 
 const reader=new FileReader();
+
 reader.onload=()=>{
 try{
 const data=JSON.parse(reader.result);
@@ -337,17 +366,30 @@ Array.isArray(x.candles)&&x.candles.length===5)){
 throw new Error("Invalid backup");
 }
 
-if(!confirm("Restore backup? This will replace current history."))return;
+if(!confirm("Restore backup? This will replace current history.")){
+event.target.value="";
+return;
+}
 
-storeHistory(incoming.slice(0,100));
+const prepared=incoming.slice(0,100).map(x=>({
+...x,
+id:x.id||Date.now()+"-"+Math.random().toString(36).slice(2),
+mode:x.mode||"TEST",
+pattern:x.pattern||x.type
+}));
+
+storeHistory(prepared);
 renderHistory();
 updateStats();
 show("Backup restored successfully");
+
 }catch(e){
 show("Invalid backup file");
 }
+
 event.target.value="";
 };
+
 reader.readAsText(file);
 }
 
@@ -355,7 +397,8 @@ function exportCSV(){
 const history=getHistory();
 if(history.length===0){show("No history to export");return;}
 
-const headers=["Date","Candle Time","Type","Result"];
+const headers=["Date","Candle Time","Mode","Pattern","Result"];
+
 for(let i=1;i<=5;i++){
 headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
 }
@@ -365,8 +408,13 @@ return '"'+String(v??"").replace(/"/g,'""')+'"';
 }
 
 const lines=[headers.map(quote).join(",")];
+
 history.forEach(item=>{
-const row=[item.date,item.candleTime,item.type,item.result];
+const row=[
+item.date,item.candleTime,item.mode||"TEST",
+getPattern(item),item.result
+];
+
 (item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
 lines.push(row.map(quote).join(","));
 });
@@ -374,6 +422,7 @@ lines.push(row.map(quote).join(","));
 const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{
 type:"text/csv;charset=utf-8"
 });
+
 const url=URL.createObjectURL(blob);
 const a=document.createElement("a");
 a.href=url;
@@ -388,23 +437,35 @@ show("CSV EXPORT STARTED");
 function test(type){
 const candles=getCandles();
 if(!candles)return;
+
 const valid=detect(candles,type);
 show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
-saveHistory(type,valid,candles);
+
+saveHistory("TEST",type,valid,candles);
 }
 
 function autoTest(){
 const candles=getCandles();
 if(!candles)return;
-const buy=detect(candles,"BUY");
-const sell=detect(candles,"SELL");
 
-show("AUTO DETECTION | BUY: "+(buy?"DETECTED":"NOT DETECTED")+
-" | SELL: "+(sell?"DETECTED":"NOT DETECTED"));
+const buyDetected=detect(candles,"BUY");
+const sellDetected=detect(candles,"SELL");
 
-if(buy)saveHistory("BUY",true,candles);
-if(sell)saveHistory("SELL",true,candles);
-if(!buy&&!sell)saveHistory("BOTH",false,candles);
+show("AUTO DETECTION | BUY: "+
+(buyDetected?"DETECTED":"NOT DETECTED")+
+" | SELL: "+(sellDetected?"DETECTED":"NOT DETECTED"));
+
+if(buyDetected){
+saveHistory("AUTO","BUY",true,candles);
+}
+
+if(sellDetected){
+saveHistory("AUTO","SELL",true,candles);
+}
+
+if(!buyDetected&&!sellDetected){
+saveHistory("AUTO","BOTH",false,candles);
+}
 }
 
 function clearHistory(){
