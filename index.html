@@ -1,11 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4H Candle Demo Scanner</title>
+<title>4H Demo Scanner V4</title>
 <style>
-body{background:#101827;color:white;font-family:Arial;padding:12px}
+body{background:#101827;color:white;font-family:Arial,sans-serif;padding:12px;margin:0}
 .container{max-width:650px;margin:auto}
 h2,h3{text-align:center;color:#60a5fa}
 .note{text-align:center;color:#cbd5e1;font-size:13px}
@@ -13,6 +14,7 @@ table{width:100%;border-collapse:collapse;margin:12px 0}
 th,td{border:1px solid #475569;padding:7px 3px;text-align:center}
 th{background:#263449}
 input{width:90%;box-sizing:border-box;padding:9px 2px;background:#263449;color:white;border:1px solid #64748b;border-radius:5px;text-align:center}
+.timeinput{width:100%;padding:12px;margin:8px 0}
 button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;margin:5px 1%;width:47%}
 .buy{background:#15803d}
 .sell{background:#dc2626}
@@ -20,33 +22,48 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .blue{background:#2563eb;width:98%}
 .clear{background:#64748b;width:98%}
 #result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold}
-.history{background:#263449;padding:10px;margin:7px 0;border-radius:7px;font-size:13px}
+.history{background:#263449;padding:12px;margin:8px 0;border-radius:7px;font-size:13px;overflow-wrap:anywhere}
+.history details{margin-top:8px}
+.history summary{color:#93c5fd;cursor:pointer}
+.small{color:#cbd5e1;font-size:12px}
 </style>
 </head>
 <body>
 <div class="container">
+
 <h2>4H Candle Demo Scanner</h2>
-<p class="note">Educational Demo Only | Manual Candle Data</p>
+<p class="note">V4 | Educational Demo Only</p>
+
+<h3>4H Candle Start Time</h3>
+<input class="timeinput" type="datetime-local" id="candleTime">
 
 <h3>5 Candle Input</h3>
 <table>
-<thead><tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr></thead>
+<thead>
+<tr>
+<th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th>
+</tr>
+</thead>
 <tbody id="rows"></tbody>
 </table>
 
 <button class="sample" onclick="loadSample('SELL')">LOAD SELL SAMPLE</button>
 <button class="sample" onclick="loadSample('BUY')">LOAD BUY SAMPLE</button>
+
 <button class="sell" onclick="test('SELL')">TEST SELL</button>
 <button class="buy" onclick="test('BUY')">TEST BUY</button>
+
 <button class="blue" onclick="autoTest()">AUTO DETECT BOTH</button>
 
-<div id="result">Enter 5 Candle Values</div>
+<div id="result">Enter Candle Values</div>
 
-<h3>Pattern History</h3>
-<div id="history">No results yet</div>
+<h3>Permanent Pattern History</h3>
+<p class="small">History is saved in this browser on this device.</p>
+<div id="history">Loading history...</div>
 <button class="clear" onclick="clearHistory()">CLEAR HISTORY</button>
 
 </div>
+
 <script>
 const sellData=[
 [10,12,9,11],
@@ -121,15 +138,71 @@ candles[4].c>candles[4].o&&
 candles[4].h>candles[3].h;
 }
 
-function saveHistory(type,success){
-let history=document.getElementById("history");
-if(history.innerText==="No results yet")history.innerHTML="";
-let item=document.createElement("div");
-item.className="history";
-item.textContent=new Date().toLocaleString()+
-" | 4H Demo | "+type+" | "+
-(success?"PATTERN DETECTED":"NOT DETECTED");
-history.prepend(item);
+function getHistory(){
+try{
+return JSON.parse(localStorage.getItem("demoPatternHistory")||"[]");
+}catch(e){
+return [];
+}
+}
+
+function saveHistory(type,success,candles){
+const history=getHistory();
+const time=document.getElementById("candleTime").value;
+history.unshift({
+date:new Date().toLocaleString(),
+candleTime:time||"Not entered",
+type:type,
+result:success?"DETECTED":"NOT DETECTED",
+candles:candles.map(x=>({...x}))
+});
+try{
+localStorage.setItem("demoPatternHistory",JSON.stringify(history.slice(0,100)));
+renderHistory();
+}catch(e){
+show("Browser storage unavailable. History could not be saved.");
+}
+}
+
+function renderHistory(){
+const history=getHistory();
+const box=document.getElementById("history");
+box.innerHTML="";
+if(history.length===0){
+box.textContent="No history yet";
+return;
+}
+history.forEach((item,index)=>{
+const div=document.createElement("div");
+div.className="history";
+const heading=document.createElement("strong");
+heading.textContent=(index+1)+". "+item.type+" | "+item.result;
+div.appendChild(heading);
+
+const info=document.createElement("p");
+info.textContent="Tested: "+item.date+" | 4H Candle: "+item.candleTime;
+div.appendChild(info);
+
+const details=document.createElement("details");
+const summary=document.createElement("summary");
+summary.textContent="View 5 Candle Details";
+details.appendChild(summary);
+
+const table=document.createElement("table");
+table.innerHTML="<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
+item.candles.forEach((c,i)=>{
+const tr=document.createElement("tr");
+[i+1,c.o,c.h,c.l,c.c].forEach(v=>{
+const td=document.createElement("td");
+td.textContent=v;
+tr.appendChild(td);
+});
+table.appendChild(tr);
+});
+details.appendChild(table);
+div.appendChild(details);
+box.appendChild(div);
+});
 }
 
 function test(type){
@@ -139,7 +212,7 @@ let valid=detect(candles,type);
 show(valid?
 "SUCCESS!<br>"+type+" PATTERN DETECTED":
 "PATTERN NOT DETECTED");
-saveHistory(type,valid);
+saveHistory(type,valid,candles);
 }
 
 function autoTest(){
@@ -147,19 +220,24 @@ const candles=getCandles();
 if(!candles)return;
 let buy=detect(candles,"BUY");
 let sell=detect(candles,"SELL");
+
 show("AUTO DETECTION<br>BUY: "+
 (buy?"DETECTED":"NOT DETECTED")+
 "<br>SELL: "+(sell?"DETECTED":"NOT DETECTED"));
-if(buy)saveHistory("BUY",true);
-if(sell)saveHistory("SELL",true);
-if(!buy&&!sell)saveHistory("BOTH",false);
+
+if(buy)saveHistory("BUY",true,candles);
+if(sell)saveHistory("SELL",true,candles);
+if(!buy&&!sell)saveHistory("BOTH",false,candles);
 }
 
 function clearHistory(){
-document.getElementById("history").innerHTML="No results yet";
+if(!confirm("Delete all saved history?"))return;
+localStorage.removeItem("demoPatternHistory");
+renderHistory();
+show("History Cleared");
 }
 
-loadSample("SELL");
+renderHistory();
 </script>
 </body>
 </html>
