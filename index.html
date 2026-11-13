@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>4H Demo Scanner V5</title>
+<title>4H Demo Scanner V6</title>
 <style>
 body{background:#101827;color:white;font-family:Arial;padding:12px;margin:0}
 .container{max-width:700px;margin:auto}
@@ -24,17 +24,41 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 .clear{background:#64748b;width:98%}
 .export{background:#0f766e;width:98%}
 #result{margin:15px 0;padding:15px;background:#263449;border-radius:8px;text-align:center;font-weight:bold}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.stat{background:#263449;padding:15px 8px;border-radius:9px;text-align:center}
+.stat strong{display:block;font-size:25px;margin-top:7px}
+.stat span{font-size:12px;color:#cbd5e1}
 .history{background:#263449;padding:12px;margin:8px 0;border-radius:7px;font-size:13px;overflow-wrap:anywhere}
 .history details{margin-top:8px}
 .history summary{color:#93c5fd;cursor:pointer}
 .filters select{width:100%}
+.bar-bg{height:15px;background:#475569;border-radius:10px;overflow:hidden;margin:7px 0}
+.bar{height:100%;width:0%;background:#22c55e}
+.bar.sellbar{background:#ef4444}
 </style>
 </head>
 <body>
 <div class="container">
 
 <h2>4H Candle Demo Scanner</h2>
-<p class="note">V5 | Educational Demo Only</p>
+<p class="note">V6 | Educational Demo Only</p>
+
+<h3>Statistics Dashboard</h3>
+
+<div class="cards">
+<div class="stat"><span>TOTAL TESTS</span><strong id="total">0</strong></div>
+<div class="stat"><span>BUY DETECTED</span><strong id="buyCount">0</strong></div>
+<div class="stat"><span>SELL DETECTED</span><strong id="sellCount">0</strong></div>
+<div class="stat"><span>NOT DETECTED</span><strong id="missCount">0</strong></div>
+</div>
+
+<div class="stat">
+<span>BUY / SELL DISTRIBUTION</span>
+<p id="distribution">No data</p>
+<div class="bar-bg"><div class="bar" id="buyBar"></div></div>
+<div class="bar-bg"><div class="bar sellbar" id="sellBar"></div></div>
+<p class="small" id="percentages">BUY 0% | SELL 0%</p>
+</div>
 
 <h3>4H Candle Start Time</h3>
 <input class="timeinput" type="datetime-local" id="candleTime">
@@ -42,9 +66,7 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 <h3>5 Candle Input</h3>
 <table>
 <thead>
-<tr>
-<th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th>
-</tr>
+<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>
 </thead>
 <tbody id="rows"></tbody>
 </table>
@@ -69,15 +91,12 @@ button{padding:12px 5px;border:0;border-radius:7px;color:white;font-weight:bold;
 </select>
 </div>
 
-<input class="search" id="search"
-placeholder="Search history..."
-oninput="renderHistory()">
+<input class="search" id="search" placeholder="Search history..." oninput="renderHistory()">
 
 <button class="export" onclick="exportCSV()">EXPORT HISTORY CSV</button>
 
 <p class="small" id="count">0 records</p>
 <div id="history">No history yet</div>
-
 <button class="clear" onclick="clearHistory()">CLEAR ALL HISTORY</button>
 
 </div>
@@ -124,25 +143,20 @@ show(type+" SAMPLE LOADED");
 
 function getCandles(){
 const candles=[];
-
 for(let i=0;i<5;i++){
 let v=[0,1,2,3].map(j=>
 document.getElementById(`c${i}_${j}`).value.trim()
 );
-
 if(v.some(x=>x==="")){
 show("Please fill all 5 candle values");
 return null;
 }
-
 let [o,h,l,c]=v.map(Number);
-
 if(![o,h,l,c].every(Number.isFinite)||
 h<Math.max(o,c)||l>Math.min(o,c)||h<l){
 show("Invalid Candle "+(i+1));
 return null;
 }
-
 candles.push({o,h,l,c});
 }
 return candles;
@@ -155,7 +169,6 @@ candles[3].c<candles[3].o&&
 candles[4].c<candles[4].o&&
 candles[4].l<candles[3].l;
 }
-
 return candles.slice(0,3).every(x=>x.c<x.o)&&
 candles[3].c>candles[3].o&&
 candles[4].c>candles[4].o&&
@@ -164,18 +177,13 @@ candles[4].h>candles[3].h;
 
 function getHistory(){
 try{
-const data=JSON.parse(
-localStorage.getItem("demoPatternHistory")||"[]"
-);
+const data=JSON.parse(localStorage.getItem("demoPatternHistory")||"[]");
 return Array.isArray(data)?data:[];
-}catch(e){
-return [];
-}
+}catch(e){return [];}
 }
 
 function saveHistory(type,success,candles){
 const history=getHistory();
-
 history.unshift({
 date:new Date().toLocaleString(),
 candleTime:document.getElementById("candleTime").value||"Not entered",
@@ -183,16 +191,36 @@ type:type,
 result:success?"DETECTED":"NOT DETECTED",
 candles:candles.map(x=>({...x}))
 });
-
 try{
-localStorage.setItem(
-"demoPatternHistory",
-JSON.stringify(history.slice(0,100))
-);
+localStorage.setItem("demoPatternHistory",JSON.stringify(history.slice(0,100)));
 renderHistory();
-}catch(e){
-show("Browser storage unavailable. History could not be saved.");
+updateStats();
+}catch(e){show("Browser storage unavailable");}
 }
+
+function updateStats(){
+const h=getHistory();
+const total=h.length;
+const buy=h.filter(x=>x.type==="BUY"&&x.result==="DETECTED").length;
+const sell=h.filter(x=>x.type==="SELL"&&x.result==="DETECTED").length;
+const miss=h.filter(x=>x.result==="NOT DETECTED").length;
+const detected=buy+sell;
+const distribution=buy+sell;
+
+document.getElementById("total").textContent=total;
+document.getElementById("buyCount").textContent=buy;
+document.getElementById("sellCount").textContent=sell;
+document.getElementById("missCount").textContent=miss;
+
+const bp=distribution?Math.round(buy/distribution*100):0;
+const sp=distribution?Math.round(sell/distribution*100):0;
+
+document.getElementById("buyBar").style.width=bp+"%";
+document.getElementById("sellBar").style.width=sp+"%";
+document.getElementById("percentages").textContent=
+"BUY "+bp+"% | SELL "+sp+"%";
+document.getElementById("distribution").textContent=
+detected+" detected patterns";
 }
 
 function renderHistory(){
@@ -201,14 +229,8 @@ const filter=document.getElementById("filter").value;
 const query=document.getElementById("search").value.toLowerCase();
 
 const filtered=all.filter(item=>{
-const matchFilter=filter==="ALL"||
-item.type===filter||item.result===filter;
-
-const matchSearch=(
-item.date+" "+item.candleTime+" "+
-item.type+" "+item.result
-).toLowerCase().includes(query);
-
+const matchFilter=filter==="ALL"||item.type===filter||item.result===filter;
+const matchSearch=(item.date+" "+item.candleTime+" "+item.type+" "+item.result).toLowerCase().includes(query);
 return matchFilter&&matchSearch;
 });
 
@@ -232,8 +254,7 @@ heading.textContent=(index+1)+". "+item.type+" | "+item.result;
 div.appendChild(heading);
 
 const info=document.createElement("p");
-info.textContent="Tested: "+item.date+
-" | 4H Candle: "+item.candleTime;
+info.textContent="Tested: "+item.date+" | 4H Candle: "+item.candleTime;
 div.appendChild(info);
 
 const details=document.createElement("details");
@@ -242,18 +263,15 @@ summary.textContent="View 5 Candle Details";
 details.appendChild(summary);
 
 const table=document.createElement("table");
-table.innerHTML=
-"<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
+table.innerHTML="<tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>";
 
 (item.candles||[]).forEach((c,i)=>{
 const tr=document.createElement("tr");
-
 [i+1,c.o,c.h,c.l,c.c].forEach(v=>{
 const td=document.createElement("td");
 td.textContent=v;
 tr.appendChild(td);
 });
-
 table.appendChild(tr);
 });
 
@@ -265,105 +283,66 @@ box.appendChild(div);
 
 function exportCSV(){
 const history=getHistory();
+if(history.length===0){show("No history to export");return;}
 
-if(history.length===0){
-show("No history to export");
-return;
-}
-
-const headers=[
-"Date","Candle Time","Type","Result"
-];
-
+const headers=["Date","Candle Time","Type","Result"];
 for(let i=1;i<=5;i++){
-headers.push(
-"C"+i+" Open",
-"C"+i+" High",
-"C"+i+" Low",
-"C"+i+" Close"
-);
+headers.push("C"+i+" Open","C"+i+" High","C"+i+" Low","C"+i+" Close");
 }
 
-function quote(value){
-return '"'+String(value??"").replace(/"/g,'""')+'"';
-}
+function quote(v){return '"'+String(v??"").replace(/"/g,'""')+'"';}
 
 const lines=[headers.map(quote).join(",")];
-
 history.forEach(item=>{
-const row=[
-item.date,
-item.candleTime,
-item.type,
-item.result
-];
-
-(item.candles||[]).forEach(c=>{
-row.push(c.o,c.h,c.l,c.c);
-});
-
+const row=[item.date,item.candleTime,item.type,item.result];
+(item.candles||[]).forEach(c=>row.push(c.o,c.h,c.l,c.c));
 lines.push(row.map(quote).join(","));
 });
 
-const csv="\uFEFF"+lines.join("\r\n");
-const blob=new Blob([csv],{
-type:"text/csv;charset=utf-8;"
-});
-
+const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
 const url=URL.createObjectURL(blob);
 const link=document.createElement("a");
-
 link.href=url;
 link.download="Candle_Demo_History.csv";
 document.body.appendChild(link);
 link.click();
 link.remove();
-
-URL.revokeObjectURL(url);
+setTimeout(()=>URL.revokeObjectURL(url),1000);
 show("CSV EXPORT STARTED");
 }
 
 function test(type){
 const candles=getCandles();
 if(!candles)return;
-
 const valid=detect(candles,type);
-
-show(valid?
-type+" PATTERN DETECTED":
-type+" PATTERN NOT DETECTED");
-
+show(valid?type+" PATTERN DETECTED":type+" PATTERN NOT DETECTED");
 saveHistory(type,valid,candles);
 }
 
 function autoTest(){
 const candles=getCandles();
 if(!candles)return;
-
 const buy=detect(candles,"BUY");
 const sell=detect(candles,"SELL");
 
-show("AUTO DETECTION<br>BUY: "+
-(buy?"DETECTED":"NOT DETECTED")+
+show("AUTO DETECTION<br>BUY: "+(buy?"DETECTED":"NOT DETECTED")+
 "<br>SELL: "+(sell?"DETECTED":"NOT DETECTED"));
 
 if(buy)saveHistory("BUY",true,candles);
 if(sell)saveHistory("SELL",true,candles);
-
-if(!buy&&!sell){
-saveHistory("BOTH",false,candles);
-}
+if(!buy&&!sell)saveHistory("BOTH",false,candles);
 }
 
 function clearHistory(){
 if(!confirm("Delete all saved history?"))return;
-
 localStorage.removeItem("demoPatternHistory");
 renderHistory();
+updateStats();
 show("History Cleared");
 }
 
 renderHistory();
+updateStats();
 loadSample("SELL");
 </script>
 </body>
