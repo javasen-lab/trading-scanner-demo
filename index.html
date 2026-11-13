@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101827">
 <link rel="manifest" href="./manifest.json">
-<title>4H Candle Demo Scanner V11</title>
+<title>4H Candle Demo Scanner V12</title>
 
 <style>
 *{box-sizing:border-box}
@@ -70,7 +71,7 @@ input[type=checkbox]{width:auto;min-width:auto}
 <body>
 <div class="container">
 
-<h2>4H Candle Demo Scanner <span class="small">V11</span></h2>
+<h2>4H Candle Demo Scanner <span class="small">V12</span></h2>
 <p class="small">Manual candle-pattern testing | Educational demo only</p>
 
 <div class="card">
@@ -124,7 +125,10 @@ input[type=checkbox]{width:auto;min-width:auto}
   <input type="checkbox" id="duplicateWarning" checked>
   Enable Duplicate Warning
  </label>
- <p class="small">If the same test data already exists, the app will ask before saving it again.</p>
+ <p class="small">
+  The same five candle values will be treated as duplicate,
+  regardless of whether the previous test was BUY, SELL or AUTO.
+ </p>
  <button class="gray" onclick="saveSettings()">Save Settings</button>
  <span id="settingsStatus" class="small"></span>
 </div>
@@ -136,7 +140,7 @@ input[type=checkbox]{width:auto;min-width:auto}
   <button class="orange" onclick="document.getElementById('restoreFile').click()">Restore Backup</button>
  </div>
  <input type="file" id="restoreFile" accept=".json,application/json" class="hidden" onchange="restoreHistory(event)">
- <p class="small">Backup உங்கள் History பதிவுகளை JSON கோப்பாக சேமிக்கும்.</p>
+ <p class="small">History பதிவுகளை JSON கோப்பாக Backup எடுக்கலாம்.</p>
 </div>
 
 <div class="card">
@@ -161,13 +165,16 @@ input[type=checkbox]{width:auto;min-width:auto}
 <div class="card">
  <h3>Pattern Rules</h3>
  <p class="notice">
- BUY demo: First 3 candles red, next 2 candles green, and the 5th candle high must be greater than the 4th candle high.
+ BUY demo: First 3 candles red, next 2 candles green,
+ and the 5th candle high must be greater than the 4th candle high.
  </p>
  <p class="notice">
- SELL demo: First 3 candles green, next 2 candles red, and the 5th candle low must be lower than the 4th candle low.
+ SELL demo: First 3 candles green, next 2 candles red,
+ and the 5th candle low must be lower than the 4th candle low.
  </p>
  <p class="notice">
- This app checks manually entered candle patterns only. Results are educational pattern matches, not financial or trading signals.
+ This app checks manually entered candle patterns only.
+ Results are educational pattern matches, not financial or trading signals.
  </p>
 </div>
 
@@ -210,7 +217,8 @@ function storeHistory(data){
  try{
   localStorage.setItem(HISTORY_KEY,JSON.stringify(data));
   const check=JSON.parse(localStorage.getItem(HISTORY_KEY)||"null");
-  if(!Array.isArray(check) || check.length!==data.length){
+
+  if(!Array.isArray(check)||check.length!==data.length){
    throw new Error("Storage verification failed");
   }
   return true;
@@ -233,6 +241,7 @@ function saveSettings(){
  const settings={
   duplicateWarning:document.getElementById("duplicateWarning").checked
  };
+
  try{
   localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
   document.getElementById("settingsStatus").textContent="Settings saved.";
@@ -281,6 +290,7 @@ function loadSample(type){
 
 function getCandles(){
  const data=[];
+
  for(let i=1;i<=5;i++){
   const values=["o","h","l","c"].map(k=>{
    const raw=document.getElementById(k+i).value.trim();
@@ -311,6 +321,7 @@ function getCandles(){
 
   data.push({open:o,high:h,low:l,close:c});
  }
+
  return data;
 }
 
@@ -347,10 +358,10 @@ function sameCandles(a,b){
   );
 }
 
+/* V12: Duplicate check ignores mode and pattern.
+   It compares only all five OHLC candle values. */
 function isDuplicate(mode,pattern,candles){
  return getHistory().some(record=>
-  record.mode===mode &&
-  (record.pattern||record.type)===pattern &&
   sameCandles(record.candles,candles)
  );
 }
@@ -360,8 +371,9 @@ function saveTest(mode,pattern,result,candles){
 
  if(getSettings().duplicateWarning && isDuplicate(mode,pattern,candles)){
   const proceed=confirm(
-   "Duplicate Warning!\n\nThe same candle data and test already exist in History.\n\nDo you want to save this duplicate test?"
+   "Duplicate Warning!\n\nThe same five candle values already exist in History.\n\nPrevious test mode or pattern does not matter.\n\nDo you want to save this duplicate test?"
   );
+
   if(!proceed){
    showResult("Duplicate test was not saved. Existing History is unchanged.","warning");
    return false;
@@ -380,9 +392,8 @@ function saveTest(mode,pattern,result,candles){
  };
 
  history.unshift(record);
- const trimmed=history.slice(0,MAX_HISTORY);
 
- if(!storeHistory(trimmed)) return false;
+ if(!storeHistory(history.slice(0,MAX_HISTORY)))return false;
 
  renderHistory();
  updateStats();
@@ -428,6 +439,7 @@ function autoTest(){
 
 function updateStats(){
  const history=getHistory();
+
  document.getElementById("totalTests").textContent=history.length;
  document.getElementById("detected").textContent=
   history.filter(x=>x.result==="DETECTED").length;
@@ -447,14 +459,17 @@ function renderHistory(){
 
  const filtered=history.filter(x=>{
   const pattern=x.pattern||x.type||"";
+
   const matchesSearch=
    (x.date||"").toLowerCase().includes(search)||
    pattern.toLowerCase().includes(search)||
    (x.candleTime||"").toLowerCase().includes(search);
+
   const matchesFilter=
    filter==="ALL"||
    pattern===filter||
    x.result===filter;
+
   return matchesSearch&&matchesFilter;
  });
 
@@ -470,7 +485,8 @@ function renderHistory(){
   item.className="history-item";
 
   const heading=document.createElement("strong");
-  heading.textContent=(record.pattern||record.type||"UNKNOWN")+" - "+(record.result||"UNKNOWN");
+  heading.textContent=
+   (record.pattern||record.type||"UNKNOWN")+" - "+(record.result||"UNKNOWN");
 
   const details=document.createElement("p");
   details.className="small";
@@ -491,7 +507,9 @@ function renderHistory(){
 
 function deleteRecord(id){
  if(!confirm("Delete this History record?"))return;
+
  const history=getHistory().filter(x=>x.id!==id);
+
  if(storeHistory(history)){
   renderHistory();
   updateStats();
@@ -500,6 +518,7 @@ function deleteRecord(id){
 
 function clearHistory(){
  if(!confirm("Are you sure you want to delete ALL History?"))return;
+
  if(storeHistory([])){
   renderHistory();
   updateStats();
@@ -510,17 +529,20 @@ function clearHistory(){
 function backupHistory(){
  try{
   const data={
-   version:11,
+   version:12,
    exportDate:new Date().toISOString(),
    history:getHistory()
   };
+
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
+
   a.href=url;
-  a.download="scanner-v11-backup.json";
+  a.download="scanner-v12-backup.json";
   a.click();
-  URL.revokeObjectURL(url);
+
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
  }catch(e){
   alert("Backup failed: "+e.message);
  }
@@ -528,7 +550,9 @@ function backupHistory(){
 
 function validHistoryRecord(x){
  if(!x||typeof x!=="object")return false;
+
  const pattern=x.pattern||x.type;
+
  if(!["BUY","SELL","BOTH"].includes(pattern))return false;
  if(!["DETECTED","NOT DETECTED"].includes(x.result))return false;
  if(!Array.isArray(x.candles)||x.candles.length!==5)return false;
@@ -537,8 +561,13 @@ function validHistoryRecord(x){
 
  return x.candles.every(c=>{
   if(!c||typeof c!=="object")return false;
+
   const values=[c.open,c.high,c.low,c.close];
-  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
+
+  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0)){
+   return false;
+  }
+
   return c.high>=Math.max(c.open,c.close)&&
    c.low<=Math.min(c.open,c.close)&&
    c.high>=c.low;
@@ -564,6 +593,7 @@ function restoreHistory(event){
 
    if(!Array.isArray(incoming))throw new Error("Invalid backup file.");
    if(incoming.length>1000)throw new Error("Too many records in backup.");
+
    if(!incoming.every(validHistoryRecord)){
     throw new Error("Backup contains invalid History records.");
    }
@@ -577,7 +607,11 @@ function restoreHistory(event){
 
    combined.forEach((record,index)=>{
     let id=record.id||("restored-"+Date.now()+"-"+index);
-    if(ids.has(id))id="restored-"+Date.now()+"-"+index;
+
+    if(ids.has(id)){
+     id="restored-"+Date.now()+"-"+index;
+    }
+
     ids.add(id);
     unique.push({...record,id});
    });
@@ -604,6 +638,7 @@ function restoreHistory(event){
 
 function exportCSV(){
  const history=getHistory();
+
  if(history.length===0){
   alert("No History to export.");
   return;
@@ -629,17 +664,19 @@ function exportCSV(){
  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const a=document.createElement("a");
+
  a.href=url;
  a.download="scanner-history.csv";
  a.click();
- URL.revokeObjectURL(url);
+
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
   navigator.serviceWorker.register("./sw.js")
    .then(()=>{
-    document.getElementById("appStatus").textContent="V11 Offline support ready";
+    document.getElementById("appStatus").textContent="V12 Offline support ready";
    })
    .catch(()=>{
     document.getElementById("appStatus").textContent="Offline setup pending";
@@ -655,8 +692,10 @@ window.addEventListener("beforeinstallprompt",event=>{
 
 document.getElementById("installBtn").addEventListener("click",async()=>{
  if(!deferredInstallPrompt)return;
+
  deferredInstallPrompt.prompt();
  await deferredInstallPrompt.userChoice;
+
  deferredInstallPrompt=null;
  document.getElementById("installBtn").classList.add("hidden");
 });
