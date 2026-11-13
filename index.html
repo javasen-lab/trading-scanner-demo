@@ -10,34 +10,48 @@ body {
   background:#101827;
   color:white;
   font-family:Arial,sans-serif;
-  padding:20px;
-  text-align:center;
+  padding:15px;
 }
-h2 {color:#60a5fa;}
+h2 {color:#60a5fa;text-align:center;}
+p {text-align:center;color:#cbd5e1;}
 .card {
   background:#1e293b;
-  padding:20px;
-  margin:15px 0;
+  padding:14px;
+  margin:14px 0;
   border-radius:12px;
+}
+table {width:100%;border-collapse:collapse;}
+th,td {padding:5px;text-align:center;}
+th {color:#93c5fd;font-size:13px;}
+input {
+  width:100%;
+  box-sizing:border-box;
+  padding:9px 2px;
+  border-radius:6px;
+  border:1px solid #64748b;
+  background:#0f172a;
+  color:white;
+  text-align:center;
 }
 button {
   width:100%;
-  padding:15px;
-  margin:8px 0;
+  padding:14px;
+  margin-top:12px;
   border:0;
   border-radius:8px;
-  font-size:16px;
   color:white;
+  font-size:16px;
   font-weight:bold;
 }
 .sell {background:#dc3545;}
 .buy {background:#16a34a;}
 #result {
-  margin-top:20px;
-  padding:15px;
   background:#334155;
+  padding:16px;
+  margin-top:15px;
   border-radius:10px;
-  line-height:1.6;
+  line-height:1.7;
+  text-align:center;
 }
 </style>
 </head>
@@ -47,77 +61,118 @@ button {
 <p>Educational Pattern Testing</p>
 
 <div class="card">
-<h3>SELL Pattern</h3>
-<p>3 Green + 2 Red Candles</p>
-<button class="sell" onclick="testSell()">
-TEST SELL PATTERN
+<h3>5 Candle Values</h3>
+<p>ஒவ்வொரு Candle-ன் மதிப்புகளையும் உள்ளிடுங்கள்</p>
+
+<table>
+<thead>
+<tr>
+<th>Candle</th>
+<th>Open</th>
+<th>High</th>
+<th>Low</th>
+<th>Close</th>
+</tr>
+</thead>
+<tbody id="candleRows"></tbody>
+</table>
+
+<button onclick="loadSample()" style="background:#475569">
+LOAD SAMPLE DATA
 </button>
 </div>
 
 <div class="card">
-<h3>BUY Pattern</h3>
-<p>3 Red + 2 Green Candles</p>
-<button class="buy" onclick="testBuy()">
+<h3>Pattern Test</h3>
+<button class="sell" onclick="checkPattern('SELL')">
+TEST SELL PATTERN
+</button>
+<button class="buy" onclick="checkPattern('BUY')">
 TEST BUY PATTERN
 </button>
 </div>
 
-<div id="result">
-Waiting for test...
-</div>
+<div id="result">Enter candle values and test</div>
 
 <script>
-function testSell() {
-  const candles = [
-    {o:10,h:12,l:9,c:11},
-    {o:11,h:13,l:10,c:12},
-    {o:12,h:14,l:11,c:13},
-    {o:13,h:14,l:11,c:12},
-    {o:12,h:13,l:10,c:11}
-  ];
+const samples = [
+ [10,12,9,11],
+ [11,13,10,12],
+ [12,14,11,13],
+ [13,14,11,12],
+ [12,13,10,11]
+];
 
-  const greens = candles.slice(0,3)
-    .every(x => x.c > x.o);
-  const red1 = candles[3].c < candles[3].o;
-  const red2 = candles[4].c < candles[4].o;
-  const broken = candles[4].l < candles[3].l;
-
-  showResult(greens && red1 && red2 && broken,
-    "SELL");
+function createInputs() {
+ const tbody = document.getElementById("candleRows");
+ for(let i=0;i<5;i++) {
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+   <td>${i+1}</td>
+   ${["Open","High","Low","Close"].map((name,j)=>
+    `<td><input type="number" step="any"
+    id="c${i}_${j}" value="${samples[i][j]}"
+    aria-label="Candle ${i+1} ${name}"></td>`
+   ).join("")}
+  `;
+  tbody.appendChild(tr);
+ }
 }
 
-function testBuy() {
-  const candles = [
-    {o:13,h:14,l:11,c:12},
-    {o:12,h:13,l:10,c:11},
-    {o:11,h:12,l:9,c:10},
-    {o:10,h:13,l:9,c:12},
-    {o:12,h:14,l:10,c:13}
-  ];
-
-  const reds = candles.slice(0,3)
-    .every(x => x.c < x.o);
-  const green1 = candles[3].c > candles[3].o;
-  const green2 = candles[4].c > candles[4].o;
-  const broken = candles[4].h > candles[3].h;
-
-  showResult(reds && green1 && green2 && broken,
-    "BUY");
-}
-
-function showResult(valid,type) {
-  const result = document.getElementById("result");
-
-  if(valid) {
-    result.innerHTML =
-      "SUCCESS!<br>" + type +
-      " Pattern Detected<br>Demo Test Passed";
-  } else {
-    result.innerHTML =
-      "Pattern Not Detected";
+function loadSample() {
+ for(let i=0;i<5;i++) {
+  for(let j=0;j<4;j++) {
+   document.getElementById(`c${i}_${j}`).value=samples[i][j];
   }
+ }
+ document.getElementById("result").innerText="Sample data loaded";
 }
-</script>
 
+function checkPattern(type) {
+ const candles=[];
+ for(let i=0;i<5;i++) {
+  const vals=[];
+  for(let j=0;j<4;j++) {
+   const v=document.getElementById(`c${i}_${j}`).value;
+   if(v.trim()==="") {
+    show("Please fill all candle values");
+    return;
+   }
+   vals.push(Number(v));
+  }
+  const [o,h,l,c]=vals;
+  if(!vals.every(Number.isFinite) || h<Math.max(o,c) ||
+     l>Math.min(o,c) || h<l) {
+   show("Candle "+(i+1)+" values are invalid");
+   return;
+  }
+  candles.push({o,h,l,c});
+ }
+
+ let valid=false;
+ if(type==="SELL") {
+  const first3=candles.slice(0,3).every(x=>x.c>x.o);
+  const red1=candles[3].c<candles[3].o;
+  const red2=candles[4].c<candles[4].o;
+  const broken=candles[4].l<candles[3].l;
+  valid=first3&&red1&&red2&&broken;
+ } else {
+  const first3=candles.slice(0,3).every(x=>x.c<x.o);
+  const green1=candles[3].c>candles[3].o;
+  const green2=candles[4].c>candles[4].o;
+  const broken=candles[4].h>candles[3].h;
+  valid=first3&&green1&&green2&&broken;
+ }
+ show(valid
+  ? "SUCCESS!<br>"+type+" Pattern Detected<br>Demo Test Passed"
+  : "Pattern Not Detected");
+}
+
+function show(message) {
+ document.getElementById("result").innerHTML=message;
+}
+
+createInputs();
+</script>
 </body>
 </html>
