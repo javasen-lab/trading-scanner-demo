@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "scanner-v11";
+const CACHE_NAME = "scanner-v12";
 
 const FILES = [
   "./",
