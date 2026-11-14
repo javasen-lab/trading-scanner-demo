@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101827">
 <link rel="manifest" href="./manifest.json">
-<title>4H Candle Demo Scanner V12.1</title>
+<title>4H Candle Demo Scanner V12.2</title>
 
 <style>
 *{box-sizing:border-box}
@@ -17,7 +18,10 @@ input,select,button{padding:12px;border-radius:7px;border:1px solid #475569;font
 input,select{background:#0f172a;color:white;width:100%;min-width:0}
 button{background:#2563eb;color:white;border:0;cursor:pointer;margin:4px 2px;min-height:44px}
 button:active{opacity:.75}
-.green{background:#15803d}.red{background:#b91c1c}.orange{background:#c2410c}.gray{background:#475569}
+.green{background:#15803d}
+.red{background:#b91c1c}
+.orange{background:#c2410c}
+.gray{background:#475569}
 .row{display:flex;gap:7px;flex-wrap:wrap}
 .row button{flex:1}
 .table-wrap{overflow-x:auto;width:100%}
@@ -40,14 +44,18 @@ input[type=checkbox]{width:auto;min-width:auto}
 .hidden{display:none}
 .notice{font-size:13px;color:#cbd5e1;line-height:1.5}
 #saveStatus{display:block;margin-top:9px;line-height:1.5}
-@media(max-width:480px){body{padding:9px}.card{padding:11px}button{font-size:14px}}
+@media(max-width:480px){
+ body{padding:9px}
+ .card{padding:11px}
+ button{font-size:14px}
+}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h2>4H Candle Demo Scanner <span class="small">V12.1</span></h2>
+<h2>4H Candle Demo Scanner <span class="small">V12.2</span></h2>
 <p class="small">Manual candle-pattern testing | Educational demo only</p>
 
 <div class="card">
@@ -71,7 +79,11 @@ input[type=checkbox]{width:auto;min-width:auto}
 <p class="small">O = Open | H = High | L = Low | C = Close</p>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr></thead>
+<thead>
+<tr>
+<th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th>
+</tr>
+</thead>
 <tbody id="rows"></tbody>
 </table>
 </div>
@@ -113,6 +125,7 @@ Enable Duplicate Warning
 </div>
 <input type="file" id="restoreFile" accept=".json,application/json" class="hidden" onchange="restoreHistory(event)">
 <p class="small">History பதிவுகளை JSON கோப்பாக Backup எடுக்கலாம்.</p>
+<p class="small">Smart Restore: ஏற்கனவே உள்ள பதிவுகள் மீண்டும் சேர்க்கப்படாது.</p>
 </div>
 
 <div class="card">
@@ -152,6 +165,7 @@ Enable Duplicate Warning
 const HISTORY_KEY="demoPatternHistory";
 const SETTINGS_KEY="demoScannerSettings";
 const MAX_HISTORY=100;
+
 let deferredInstallPrompt=null;
 
 const rows=document.getElementById("rows");
@@ -171,17 +185,23 @@ function getHistory(){
  try{
   const data=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
   return Array.isArray(data)?data:[];
- }catch(e){return []}
+ }catch(e){
+  return [];
+ }
 }
 
 function storeHistory(data){
  try{
   localStorage.setItem(HISTORY_KEY,JSON.stringify(data));
+
   const check=JSON.parse(localStorage.getItem(HISTORY_KEY)||"null");
+
   if(!Array.isArray(check)||check.length!==data.length){
    throw new Error("Storage verification failed");
   }
+
   return true;
+
  }catch(e){
   document.getElementById("saveStatus").textContent=
    "History could not be saved. Browser storage may be full or unavailable.";
@@ -193,13 +213,16 @@ function getSettings(){
  try{
   const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||"null");
   return {duplicateWarning:data?.duplicateWarning!==false};
- }catch(e){return {duplicateWarning:true}}
+ }catch(e){
+  return {duplicateWarning:true};
+ }
 }
 
 function saveSettings(){
  const settings={
   duplicateWarning:document.getElementById("duplicateWarning").checked
  };
+
  try{
   localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
   document.getElementById("settingsStatus").textContent="Settings saved.";
@@ -209,7 +232,8 @@ function saveSettings(){
 }
 
 function loadSettings(){
- document.getElementById("duplicateWarning").checked=getSettings().duplicateWarning;
+ document.getElementById("duplicateWarning").checked=
+  getSettings().duplicateWarning;
 }
 
 function showResult(message,type){
@@ -220,13 +244,21 @@ function showResult(message,type){
 
 function loadSample(type){
  const buyData=[
-  [13,14,11,12],[12,13,10,11],[11,12,9,10],
-  [10,13,9,12],[12,14,10,13]
+  [13,14,11,12],
+  [12,13,10,11],
+  [11,12,9,10],
+  [10,13,9,12],
+  [12,14,10,13]
  ];
+
  const sellData=[
-  [10,12,9,11],[11,13,10,12],[12,14,11,13],
-  [13,14,11,12],[12,13,10,11]
+  [10,12,9,11],
+  [11,13,10,12],
+  [12,14,11,13],
+  [13,14,11,12],
+  [12,13,10,11]
  ];
+
  const data=type==="BUY"?buyData:sellData;
 
  data.forEach((v,i)=>{
@@ -234,12 +266,14 @@ function loadSample(type){
    document.getElementById(key+(i+1)).value=v[j];
   });
  });
+
  document.getElementById("saveStatus").textContent="";
  showResult(type+" sample data loaded. Press Test "+type+".","info");
 }
 
 function getCandles(){
  const data=[];
+
  for(let i=1;i<=5;i++){
   const values=["o","h","l","c"].map(k=>{
    const raw=document.getElementById(k+i).value.trim();
@@ -251,20 +285,26 @@ function getCandles(){
   }
 
   const [o,h,l,c]=values;
+
   if([o,h,l,c].some(v=>v<=0)){
    throw new Error("Candle "+i+": Values must be greater than zero.");
   }
+
   if(h<Math.max(o,c)){
    throw new Error("Candle "+i+": High must be greater than or equal to Open and Close.");
   }
+
   if(l>Math.min(o,c)){
    throw new Error("Candle "+i+": Low must be less than or equal to Open and Close.");
   }
+
   if(h<l){
    throw new Error("Candle "+i+": High cannot be lower than Low.");
   }
+
   data.push({open:o,high:h,low:l,close:c});
  }
+
  return data;
 }
 
@@ -279,12 +319,14 @@ function getPattern(candles,type){
    fifth.close>fifth.open&&
    fifth.high>fourth.high;
  }
+
  if(type==="SELL"){
   return firstThree.every(x=>x.close>x.open)&&
    fourth.close<fourth.open&&
    fifth.close<fifth.open&&
    fifth.low<fourth.low;
  }
+
  return false;
 }
 
@@ -305,9 +347,7 @@ function isDuplicate(candles){
  );
 }
 
-/* V12.1 FIX:
-   Duplicate cancellation updates only saveStatus.
-   It never replaces the pattern detection result. */
+/* V12.1 duplicate warning behavior retained */
 function saveTest(mode,pattern,result,candles){
  const history=getHistory();
  const status=document.getElementById("saveStatus");
@@ -339,12 +379,14 @@ function saveTest(mode,pattern,result,candles){
  status.textContent="Test saved successfully.";
  renderHistory();
  updateStats();
+
  return true;
 }
 
 function test(type){
  try{
   document.getElementById("saveStatus").textContent="";
+
   const candles=getCandles();
   const result=getPattern(candles,type);
 
@@ -354,6 +396,7 @@ function test(type){
   );
 
   saveTest("TEST",type,result,candles);
+
  }catch(e){
   showResult(e.message,"failure");
  }
@@ -362,6 +405,7 @@ function test(type){
 function autoTest(){
  try{
   document.getElementById("saveStatus").textContent="";
+
   const candles=getCandles();
   const buy=getPattern(candles,"BUY");
   const sell=getPattern(candles,"SELL");
@@ -369,13 +413,16 @@ function autoTest(){
   if(buy){
    showResult("AUTO DETECT: BUY Pattern Detected","success");
    saveTest("AUTO","BUY",true,candles);
+
   }else if(sell){
    showResult("AUTO DETECT: SELL Pattern Detected","success");
    saveTest("AUTO","SELL",true,candles);
+
   }else{
    showResult("AUTO DETECT: No BUY or SELL Pattern Detected","warning");
    saveTest("AUTO","BOTH",false,candles);
   }
+
  }catch(e){
   showResult(e.message,"failure");
  }
@@ -383,13 +430,18 @@ function autoTest(){
 
 function updateStats(){
  const history=getHistory();
+
  document.getElementById("totalTests").textContent=history.length;
+
  document.getElementById("detected").textContent=
   history.filter(x=>x.result==="DETECTED").length;
+
  document.getElementById("notDetected").textContent=
   history.filter(x=>x.result==="NOT DETECTED").length;
+
  document.getElementById("buyCount").textContent=
   history.filter(x=>(x.pattern||x.type)==="BUY").length;
+
  document.getElementById("sellCount").textContent=
   history.filter(x=>(x.pattern||x.type)==="SELL").length;
 }
@@ -402,16 +454,20 @@ function renderHistory(){
 
  const filtered=history.filter(x=>{
   const pattern=x.pattern||x.type||"";
+
   const matchesSearch=
    (x.date||"").toLowerCase().includes(search)||
    pattern.toLowerCase().includes(search)||
    (x.candleTime||"").toLowerCase().includes(search);
+
   const matchesFilter=
    filter==="ALL"||pattern===filter||x.result===filter;
+
   return matchesSearch&&matchesFilter;
  });
 
  list.innerHTML="";
+
  if(filtered.length===0){
   list.textContent="No History Found.";
   return;
@@ -422,11 +478,14 @@ function renderHistory(){
   item.className="history-item";
 
   const heading=document.createElement("strong");
-  heading.textContent=(record.pattern||record.type||"UNKNOWN")+
+
+  heading.textContent=
+   (record.pattern||record.type||"UNKNOWN")+
    " - "+(record.result||"UNKNOWN");
 
   const details=document.createElement("p");
   details.className="small";
+
   details.textContent=
    "Date: "+(record.date||"Unknown")+
    " | Mode: "+(record.mode||"OLD")+
@@ -444,7 +503,9 @@ function renderHistory(){
 
 function deleteRecord(id){
  if(!confirm("Delete this History record?"))return;
+
  const history=getHistory().filter(x=>x.id!==id);
+
  if(storeHistory(history)){
   renderHistory();
   updateStats();
@@ -453,10 +514,13 @@ function deleteRecord(id){
 
 function clearHistory(){
  if(!confirm("Are you sure you want to delete ALL History?"))return;
+
  if(storeHistory([])){
   renderHistory();
   updateStats();
+
   showResult("All History cleared.","info");
+
   document.getElementById("saveStatus").textContent="";
  }
 }
@@ -464,17 +528,25 @@ function clearHistory(){
 function backupHistory(){
  try{
   const data={
-   version:12.1,
+   version:12.2,
    exportDate:new Date().toISOString(),
    history:getHistory()
   };
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+
+  const blob=new Blob(
+   [JSON.stringify(data,null,2)],
+   {type:"application/json"}
+  );
+
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
+
   a.href=url;
-  a.download="scanner-v12.1-backup.json";
+  a.download="scanner-v12.2-backup.json";
   a.click();
+
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+
  }catch(e){
   alert("Backup failed: "+e.message);
  }
@@ -482,24 +554,63 @@ function backupHistory(){
 
 function validHistoryRecord(x){
  if(!x||typeof x!=="object")return false;
+
  const pattern=x.pattern||x.type;
 
  if(!["BUY","SELL","BOTH"].includes(pattern))return false;
+
  if(!["DETECTED","NOT DETECTED"].includes(x.result))return false;
+
  if(!Array.isArray(x.candles)||x.candles.length!==5)return false;
+
  if(pattern==="BOTH"&&x.result!=="NOT DETECTED")return false;
 
  return x.candles.every(c=>{
   if(!c||typeof c!=="object")return false;
+
   const values=[c.open,c.high,c.low,c.close];
-  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
+
+  if(!values.every(v=>
+   typeof v==="number"&&Number.isFinite(v)&&v>0
+  ))return false;
+
   return c.high>=Math.max(c.open,c.close)&&
-   c.low<=Math.min(c.open,c.close)&&c.high>=c.low;
+   c.low<=Math.min(c.open,c.close)&&
+   c.high>=c.low;
+ });
+}
+
+/*
+ V12.2 SMART RESTORE
+
+ Existing records are preserved exactly as they are.
+ Incoming records are compared against existing records.
+ Only new unique incoming records are added.
+
+ Existing duplicate records are NOT deleted.
+*/
+
+function makeRestoreKey(record){
+ const candles=record.candles.map(c=>({
+  open:Number(c.open),
+  high:Number(c.high),
+  low:Number(c.low),
+  close:Number(c.close)
+ }));
+
+ return JSON.stringify({
+  date:record.date||"",
+  candleTime:record.candleTime||"Not entered",
+  mode:record.mode||"OLD",
+  pattern:record.pattern||record.type||"",
+  result:record.result||"",
+  candles:candles
  });
 }
 
 function restoreHistory(event){
  const file=event.target.files[0];
+
  if(!file)return;
 
  if(file.size>2*1024*1024){
@@ -513,35 +624,99 @@ function restoreHistory(event){
  reader.onload=()=>{
   try{
    const parsed=JSON.parse(reader.result);
+
    const incoming=Array.isArray(parsed)?parsed:parsed.history;
 
-   if(!Array.isArray(incoming))throw new Error("Invalid backup file.");
-   if(incoming.length>1000)throw new Error("Too many records in backup.");
+   if(!Array.isArray(incoming)){
+    throw new Error("Invalid backup file.");
+   }
+
+   if(incoming.length>1000){
+    throw new Error("Too many records in backup.");
+   }
+
    if(!incoming.every(validHistoryRecord)){
     throw new Error("Backup contains invalid History records.");
    }
 
-   if(!confirm("Restore "+incoming.length+" records? Existing History will be combined."))return;
-
    const existing=getHistory();
-   const combined=[...incoming,...existing];
-   const unique=[];
-   const ids=new Set();
 
-   combined.forEach((record,index)=>{
-    let id=record.id||("restored-"+Date.now()+"-"+index);
-    if(ids.has(id))id="restored-"+Date.now()+"-"+index;
-    ids.add(id);
-    unique.push({...record,id});
+   if(!confirm(
+    "Restore "+incoming.length+
+    " records?\n\nExisting History will be preserved.\nDuplicate records will be skipped."
+   )){
+    return;
+   }
+
+   /*
+    Keep all existing records first.
+    Do not deduplicate or remove existing History.
+   */
+
+   const combined=[...existing];
+   const seen=new Set();
+
+   existing.forEach(record=>{
+    if(record&&Array.isArray(record.candles)){
+     seen.add(makeRestoreKey(record));
+    }
    });
 
-   if(storeHistory(unique.slice(0,MAX_HISTORY))){
+   let added=0;
+   let skipped=0;
+
+   incoming.forEach(record=>{
+    const key=makeRestoreKey(record);
+
+    if(seen.has(key)){
+     skipped++;
+     return;
+    }
+
+    if(combined.length>=MAX_HISTORY){
+     skipped++;
+     return;
+    }
+
+    seen.add(key);
+
+    const cleanRecord={...record};
+
+    /*
+     If an incoming record has an ID already used
+     by another record, create a fresh ID.
+    */
+
+    const idExists=combined.some(x=>
+     x.id&&cleanRecord.id&&x.id===cleanRecord.id
+    );
+
+    if(!cleanRecord.id||idExists){
+     cleanRecord.id=
+      "restored-"+Date.now()+"-"+
+      Math.random().toString(36).slice(2);
+    }
+
+    combined.push(cleanRecord);
+    added++;
+   });
+
+   if(storeHistory(combined)){
     renderHistory();
     updateStats();
-    alert("Restore successful.");
+
+    alert(
+     "Restore successful!\n\n"+
+     "Previous records: "+existing.length+
+     "\nNew records added: "+added+
+     "\nDuplicate / skipped records: "+skipped+
+     "\nTotal records: "+combined.length
+    );
    }
+
   }catch(e){
    alert("Restore failed: "+e.message);
+
   }finally{
    event.target.value="";
   }
@@ -551,67 +726,66 @@ function restoreHistory(event){
   alert("Could not read the backup file.");
   event.target.value="";
  };
+
  reader.readAsText(file);
 }
 
 function exportCSV(){
  const history=getHistory();
+
  if(history.length===0){
   alert("No History to export.");
   return;
  }
 
- const rows=[["Date","Candle Time","Mode","Pattern","Result"]];
+ const rows=[
+  ["Date","Candle Time","Mode","Pattern","Result"]
+ ];
+
  history.forEach(x=>{
   rows.push([
-   x.date||"",x.candleTime||"",x.mode||"",
-   x.pattern||x.type||"",x.result||""
+   x.date||"",
+   x.candleTime||"",
+   x.mode||"",
+   x.pattern||x.type||"",
+   x.result||""
   ]);
  });
 
  const csv=rows.map(row=>
-  row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(",")
+  row.map(value=>
+   '"'+String(value).replace(/"/g,'""')+'"'
+  ).join(",")
  ).join("\n");
 
- const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+ const blob=new Blob(
+  ["\uFEFF"+csv],
+  {type:"text/csv;charset=utf-8"}
+ );
+
  const url=URL.createObjectURL(blob);
  const a=document.createElement("a");
+
  a.href=url;
  a.download="scanner-history.csv";
  a.click();
+
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("./sw.js")
-   .then(()=>document.getElementById("appStatus").textContent="V12.1 Offline support ready")
-   .catch(()=>document.getElementById("appStatus").textContent="Offline setup pending");
+  navigator.serviceWorker.register("./sw.js?v=12.2")
+   .then(()=>{
+    document.getElementById("appStatus").textContent=
+     "V12.2 Offline support ready";
+   })
+   .catch(()=>{
+    document.getElementById("appStatus").textContent=
+     "Offline setup pending";
+   });
  });
 }
 
 window.addEventListener("beforeinstallprompt",event=>{
- event.preventDefault();
- deferredInstallPrompt=event;
- document.getElementById("installBtn").classList.remove("hidden");
-});
-
-document.getElementById("installBtn").addEventListener("click",async()=>{
- if(!deferredInstallPrompt)return;
- deferredInstallPrompt.prompt();
- await deferredInstallPrompt.userChoice;
- deferredInstallPrompt=null;
- document.getElementById("installBtn").classList.add("hidden");
-});
-
-window.addEventListener("appinstalled",()=>{
- document.getElementById("appStatus").textContent="App installed.";
-});
-
-loadSettings();
-renderHistory();
-updateStats();
-loadSample("SELL");
-</script>
-</body>
-</html>
+ event.preventDef
