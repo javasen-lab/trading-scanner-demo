@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,34 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101827">
 <link rel="manifest" href="./manifest.json">
-<title>4H Candle Demo Scanner V12</title>
+<title>4H Candle Demo Scanner V12.1</title>
 
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;padding:15px;background:#101827;color:#e5e7eb;
- font-family:Arial,sans-serif;font-size:15px
-}
+body{margin:0;padding:15px;background:#101827;color:#e5e7eb;font-family:Arial,sans-serif;font-size:15px}
 .container{max-width:720px;margin:auto}
 h2,h3{color:#60a5fa}
-.card{
- background:#1e293b;padding:15px;margin:12px 0;
- border-radius:12px;border:1px solid #334155
-}
-input,select,button{
- padding:12px;border-radius:7px;border:1px solid #475569;
- font-size:15px
-}
+.card{background:#1e293b;padding:15px;margin:12px 0;border-radius:12px;border:1px solid #334155}
+input,select,button{padding:12px;border-radius:7px;border:1px solid #475569;font-size:15px}
 input,select{background:#0f172a;color:white;width:100%;min-width:0}
-button{
- background:#2563eb;color:white;border:0;
- cursor:pointer;margin:4px 2px;min-height:44px
-}
+button{background:#2563eb;color:white;border:0;cursor:pointer;margin:4px 2px;min-height:44px}
 button:active{opacity:.75}
-.green{background:#15803d}
-.red{background:#b91c1c}
-.orange{background:#c2410c}
-.gray{background:#475569}
+.green{background:#15803d}.red{background:#b91c1c}.orange{background:#c2410c}.gray{background:#475569}
 .row{display:flex;gap:7px;flex-wrap:wrap}
 .row button{flex:1}
 .table-wrap{overflow-x:auto;width:100%}
@@ -47,135 +31,114 @@ th{color:#93c5fd}
 .info{background:#1e40af;color:#dbeafe}
 .warning{background:#78350f;color:#fde68a}
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.stat{
- background:#0f172a;padding:12px;border-radius:8px;text-align:center
-}
+.stat{background:#0f172a;padding:12px;border-radius:8px;text-align:center}
 .stat strong{display:block;font-size:23px;color:#60a5fa}
-.history-item{
- background:#0f172a;padding:12px;margin:9px 0;border-radius:8px;
- border:1px solid #334155;overflow-wrap:anywhere
-}
+.history-item{background:#0f172a;padding:12px;margin:9px 0;border-radius:8px;border:1px solid #334155;overflow-wrap:anywhere}
 .history-item button{min-height:36px;padding:8px}
 label{display:block;margin:8px 0 5px}
 input[type=checkbox]{width:auto;min-width:auto}
 .hidden{display:none}
 .notice{font-size:13px;color:#cbd5e1;line-height:1.5}
-@media(max-width:480px){
- body{padding:9px}
- .card{padding:11px}
- button{font-size:14px}
-}
+#saveStatus{display:block;margin-top:9px;line-height:1.5}
+@media(max-width:480px){body{padding:9px}.card{padding:11px}button{font-size:14px}}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h2>4H Candle Demo Scanner <span class="small">V12</span></h2>
+<h2>4H Candle Demo Scanner <span class="small">V12.1</span></h2>
 <p class="small">Manual candle-pattern testing | Educational demo only</p>
 
 <div class="card">
- <h3>Statistics</h3>
- <div class="stat-grid">
-  <div class="stat">Total Tests<strong id="totalTests">0</strong></div>
-  <div class="stat">Detected<strong id="detected">0</strong></div>
-  <div class="stat">Not Detected<strong id="notDetected">0</strong></div>
-  <div class="stat">BUY Patterns<strong id="buyCount">0</strong></div>
-  <div class="stat">SELL Patterns<strong id="sellCount">0</strong></div>
- </div>
+<h3>Statistics</h3>
+<div class="stat-grid">
+<div class="stat">Total Tests<strong id="totalTests">0</strong></div>
+<div class="stat">Detected<strong id="detected">0</strong></div>
+<div class="stat">Not Detected<strong id="notDetected">0</strong></div>
+<div class="stat">BUY Patterns<strong id="buyCount">0</strong></div>
+<div class="stat">SELL Patterns<strong id="sellCount">0</strong></div>
+</div>
 </div>
 
 <div class="card">
- <h3>4H Candle Start Time</h3>
- <input type="datetime-local" id="candleTime">
+<h3>4H Candle Start Time</h3>
+<input type="datetime-local" id="candleTime">
 </div>
 
 <div class="card">
- <h3>Enter 5 Candle OHLC Values</h3>
- <p class="small">O = Open | H = High | L = Low | C = Close</p>
- <div class="table-wrap">
- <table>
-  <thead>
-   <tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr>
-  </thead>
-  <tbody id="rows"></tbody>
- </table>
- </div>
- <div class="row">
-  <button class="orange" onclick="loadSample('SELL')">Load SELL Sample</button>
-  <button class="green" onclick="loadSample('BUY')">Load BUY Sample</button>
- </div>
+<h3>Enter 5 Candle OHLC Values</h3>
+<p class="small">O = Open | H = High | L = Low | C = Close</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Candle</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<div class="row">
+<button class="orange" onclick="loadSample('SELL')">Load SELL Sample</button>
+<button class="green" onclick="loadSample('BUY')">Load BUY Sample</button>
+</div>
 </div>
 
 <div class="card">
- <h3>Pattern Testing</h3>
- <div class="row">
-  <button class="red" onclick="test('SELL')">Test SELL</button>
-  <button class="green" onclick="test('BUY')">Test BUY</button>
- </div>
- <button style="width:100%" onclick="autoTest()">AUTO DETECT BOTH</button>
- <div id="result" class="result info" style="margin-top:12px">
-  Enter candle values and select a test.
- </div>
+<h3>Pattern Testing</h3>
+<div class="row">
+<button class="red" onclick="test('SELL')">Test SELL</button>
+<button class="green" onclick="test('BUY')">Test BUY</button>
+</div>
+<button style="width:100%" onclick="autoTest()">AUTO DETECT BOTH</button>
+<div id="result" class="result info" style="margin-top:12px">
+Enter candle values and select a test.
+</div>
+<p id="saveStatus" class="small"></p>
 </div>
 
 <div class="card">
- <h3>Settings</h3>
- <label>
-  <input type="checkbox" id="duplicateWarning" checked>
-  Enable Duplicate Warning
- </label>
- <p class="small">
-  The same five candle values will be treated as duplicate,
-  regardless of whether the previous test was BUY, SELL or AUTO.
- </p>
- <button class="gray" onclick="saveSettings()">Save Settings</button>
- <span id="settingsStatus" class="small"></span>
+<h3>Settings</h3>
+<label>
+<input type="checkbox" id="duplicateWarning" checked>
+Enable Duplicate Warning
+</label>
+<p class="small">The same five candle values will be treated as duplicate, regardless of whether the previous test was BUY, SELL or AUTO.</p>
+<button class="gray" onclick="saveSettings()">Save Settings</button>
+<span id="settingsStatus" class="small"></span>
 </div>
 
 <div class="card">
- <h3>Backup / Restore</h3>
- <div class="row">
-  <button onclick="backupHistory()">Download Backup</button>
-  <button class="orange" onclick="document.getElementById('restoreFile').click()">Restore Backup</button>
- </div>
- <input type="file" id="restoreFile" accept=".json,application/json" class="hidden" onchange="restoreHistory(event)">
- <p class="small">History பதிவுகளை JSON கோப்பாக Backup எடுக்கலாம்.</p>
+<h3>Backup / Restore</h3>
+<div class="row">
+<button onclick="backupHistory()">Download Backup</button>
+<button class="orange" onclick="document.getElementById('restoreFile').click()">Restore Backup</button>
+</div>
+<input type="file" id="restoreFile" accept=".json,application/json" class="hidden" onchange="restoreHistory(event)">
+<p class="small">History பதிவுகளை JSON கோப்பாக Backup எடுக்கலாம்.</p>
 </div>
 
 <div class="card">
- <h3>History Management</h3>
- <input id="searchHistory" placeholder="Search history..." oninput="renderHistory()">
- <label>Filter</label>
- <select id="historyFilter" onchange="renderHistory()">
-  <option value="ALL">All History</option>
-  <option value="BUY">BUY</option>
-  <option value="SELL">SELL</option>
-  <option value="BOTH">AUTO BOTH</option>
-  <option value="DETECTED">Detected</option>
-  <option value="NOT DETECTED">Not Detected</option>
- </select>
- <div class="row">
-  <button onclick="exportCSV()">Export CSV</button>
-  <button class="red" onclick="clearHistory()">Clear All History</button>
- </div>
- <div id="historyList"></div>
+<h3>History Management</h3>
+<input id="searchHistory" placeholder="Search history..." oninput="renderHistory()">
+<label>Filter</label>
+<select id="historyFilter" onchange="renderHistory()">
+<option value="ALL">All History</option>
+<option value="BUY">BUY</option>
+<option value="SELL">SELL</option>
+<option value="BOTH">AUTO BOTH</option>
+<option value="DETECTED">Detected</option>
+<option value="NOT DETECTED">Not Detected</option>
+</select>
+<div class="row">
+<button onclick="exportCSV()">Export CSV</button>
+<button class="red" onclick="clearHistory()">Clear All History</button>
+</div>
+<div id="historyList"></div>
 </div>
 
 <div class="card">
- <h3>Pattern Rules</h3>
- <p class="notice">
- BUY demo: First 3 candles red, next 2 candles green,
- and the 5th candle high must be greater than the 4th candle high.
- </p>
- <p class="notice">
- SELL demo: First 3 candles green, next 2 candles red,
- and the 5th candle low must be lower than the 4th candle low.
- </p>
- <p class="notice">
- This app checks manually entered candle patterns only.
- Results are educational pattern matches, not financial or trading signals.
- </p>
+<h3>Pattern Rules</h3>
+<p class="notice">BUY demo: First 3 candles red, next 2 candles green, and the 5th candle high must be greater than the 4th candle high.</p>
+<p class="notice">SELL demo: First 3 candles green, next 2 candles red, and the 5th candle low must be lower than the 4th candle low.</p>
+<p class="notice">This app checks manually entered candle patterns only. Results are educational pattern matches, not financial or trading signals.</p>
 </div>
 
 <p id="appStatus" class="small">App starting...</p>
@@ -186,12 +149,12 @@ input[type=checkbox]{width:auto;min-width:auto}
 <script>
 "use strict";
 
-const HISTORY_KEY = "demoPatternHistory";
-const SETTINGS_KEY = "demoScannerSettings";
-const MAX_HISTORY = 100;
-let deferredInstallPrompt = null;
+const HISTORY_KEY="demoPatternHistory";
+const SETTINGS_KEY="demoScannerSettings";
+const MAX_HISTORY=100;
+let deferredInstallPrompt=null;
 
-const rows = document.getElementById("rows");
+const rows=document.getElementById("rows");
 
 for(let i=1;i<=5;i++){
  const tr=document.createElement("tr");
@@ -208,22 +171,20 @@ function getHistory(){
  try{
   const data=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
   return Array.isArray(data)?data:[];
- }catch(e){
-  return [];
- }
+ }catch(e){return []}
 }
 
 function storeHistory(data){
  try{
   localStorage.setItem(HISTORY_KEY,JSON.stringify(data));
   const check=JSON.parse(localStorage.getItem(HISTORY_KEY)||"null");
-
   if(!Array.isArray(check)||check.length!==data.length){
    throw new Error("Storage verification failed");
   }
   return true;
  }catch(e){
-  showResult("History could not be saved. Browser storage may be full or unavailable.","failure");
+  document.getElementById("saveStatus").textContent=
+   "History could not be saved. Browser storage may be full or unavailable.";
   return false;
  }
 }
@@ -232,16 +193,13 @@ function getSettings(){
  try{
   const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||"null");
   return {duplicateWarning:data?.duplicateWarning!==false};
- }catch(e){
-  return {duplicateWarning:true};
- }
+ }catch(e){return {duplicateWarning:true}}
 }
 
 function saveSettings(){
  const settings={
   duplicateWarning:document.getElementById("duplicateWarning").checked
  };
-
  try{
   localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
   document.getElementById("settingsStatus").textContent="Settings saved.";
@@ -262,21 +220,13 @@ function showResult(message,type){
 
 function loadSample(type){
  const buyData=[
-  [13,14,11,12],
-  [12,13,10,11],
-  [11,12,9,10],
-  [10,13,9,12],
-  [12,14,10,13]
+  [13,14,11,12],[12,13,10,11],[11,12,9,10],
+  [10,13,9,12],[12,14,10,13]
  ];
-
  const sellData=[
-  [10,12,9,11],
-  [11,13,10,12],
-  [12,14,11,13],
-  [13,14,11,12],
-  [12,13,10,11]
+  [10,12,9,11],[11,13,10,12],[12,14,11,13],
+  [13,14,11,12],[12,13,10,11]
  ];
-
  const data=type==="BUY"?buyData:sellData;
 
  data.forEach((v,i)=>{
@@ -284,13 +234,12 @@ function loadSample(type){
    document.getElementById(key+(i+1)).value=v[j];
   });
  });
-
+ document.getElementById("saveStatus").textContent="";
  showResult(type+" sample data loaded. Press Test "+type+".","info");
 }
 
 function getCandles(){
  const data=[];
-
  for(let i=1;i<=5;i++){
   const values=["o","h","l","c"].map(k=>{
    const raw=document.getElementById(k+i).value.trim();
@@ -302,26 +251,20 @@ function getCandles(){
   }
 
   const [o,h,l,c]=values;
-
   if([o,h,l,c].some(v=>v<=0)){
    throw new Error("Candle "+i+": Values must be greater than zero.");
   }
-
   if(h<Math.max(o,c)){
    throw new Error("Candle "+i+": High must be greater than or equal to Open and Close.");
   }
-
   if(l>Math.min(o,c)){
    throw new Error("Candle "+i+": Low must be less than or equal to Open and Close.");
   }
-
   if(h<l){
    throw new Error("Candle "+i+": High cannot be lower than Low.");
   }
-
   data.push({open:o,high:h,low:l,close:c});
  }
-
  return data;
 }
 
@@ -331,19 +274,17 @@ function getPattern(candles,type){
  const fifth=candles[4];
 
  if(type==="BUY"){
-  return firstThree.every(x=>x.close<x.open) &&
-   fourth.close>fourth.open &&
-   fifth.close>fifth.open &&
+  return firstThree.every(x=>x.close<x.open)&&
+   fourth.close>fourth.open&&
+   fifth.close>fifth.open&&
    fifth.high>fourth.high;
  }
-
  if(type==="SELL"){
-  return firstThree.every(x=>x.close>x.open) &&
-   fourth.close<fourth.open &&
-   fifth.close<fifth.open &&
+  return firstThree.every(x=>x.close>x.open)&&
+   fourth.close<fourth.open&&
+   fifth.close<fifth.open&&
    fifth.low<fourth.low;
  }
-
  return false;
 }
 
@@ -351,31 +292,33 @@ function sameCandles(a,b){
  return Array.isArray(a)&&Array.isArray(b)&&
   a.length===5&&b.length===5&&
   a.every((x,i)=>
-   x.open===b[i].open &&
-   x.high===b[i].high &&
-   x.low===b[i].low &&
+   x.open===b[i].open&&
+   x.high===b[i].high&&
+   x.low===b[i].low&&
    x.close===b[i].close
   );
 }
 
-/* V12: Duplicate check ignores mode and pattern.
-   It compares only all five OHLC candle values. */
-function isDuplicate(mode,pattern,candles){
+function isDuplicate(candles){
  return getHistory().some(record=>
   sameCandles(record.candles,candles)
  );
 }
 
+/* V12.1 FIX:
+   Duplicate cancellation updates only saveStatus.
+   It never replaces the pattern detection result. */
 function saveTest(mode,pattern,result,candles){
  const history=getHistory();
+ const status=document.getElementById("saveStatus");
 
- if(getSettings().duplicateWarning && isDuplicate(mode,pattern,candles)){
+ if(getSettings().duplicateWarning&&isDuplicate(candles)){
   const proceed=confirm(
    "Duplicate Warning!\n\nThe same five candle values already exist in History.\n\nPrevious test mode or pattern does not matter.\n\nDo you want to save this duplicate test?"
   );
 
   if(!proceed){
-   showResult("Duplicate test was not saved. Existing History is unchanged.","warning");
+   status.textContent="Duplicate not saved. Existing History is unchanged. Detection result is shown above.";
    return false;
   }
  }
@@ -391,10 +334,9 @@ function saveTest(mode,pattern,result,candles){
   candles:candles.map(x=>({...x}))
  };
 
- history.unshift(record);
+ if(!storeHistory([record,...history].slice(0,MAX_HISTORY)))return false;
 
- if(!storeHistory(history.slice(0,MAX_HISTORY)))return false;
-
+ status.textContent="Test saved successfully.";
  renderHistory();
  updateStats();
  return true;
@@ -402,6 +344,7 @@ function saveTest(mode,pattern,result,candles){
 
 function test(type){
  try{
+  document.getElementById("saveStatus").textContent="";
   const candles=getCandles();
   const result=getPattern(candles,type);
 
@@ -418,6 +361,7 @@ function test(type){
 
 function autoTest(){
  try{
+  document.getElementById("saveStatus").textContent="";
   const candles=getCandles();
   const buy=getPattern(candles,"BUY");
   const sell=getPattern(candles,"SELL");
@@ -439,7 +383,6 @@ function autoTest(){
 
 function updateStats(){
  const history=getHistory();
-
  document.getElementById("totalTests").textContent=history.length;
  document.getElementById("detected").textContent=
   history.filter(x=>x.result==="DETECTED").length;
@@ -459,22 +402,16 @@ function renderHistory(){
 
  const filtered=history.filter(x=>{
   const pattern=x.pattern||x.type||"";
-
   const matchesSearch=
    (x.date||"").toLowerCase().includes(search)||
    pattern.toLowerCase().includes(search)||
    (x.candleTime||"").toLowerCase().includes(search);
-
   const matchesFilter=
-   filter==="ALL"||
-   pattern===filter||
-   x.result===filter;
-
+   filter==="ALL"||pattern===filter||x.result===filter;
   return matchesSearch&&matchesFilter;
  });
 
  list.innerHTML="";
-
  if(filtered.length===0){
   list.textContent="No History Found.";
   return;
@@ -485,8 +422,8 @@ function renderHistory(){
   item.className="history-item";
 
   const heading=document.createElement("strong");
-  heading.textContent=
-   (record.pattern||record.type||"UNKNOWN")+" - "+(record.result||"UNKNOWN");
+  heading.textContent=(record.pattern||record.type||"UNKNOWN")+
+   " - "+(record.result||"UNKNOWN");
 
   const details=document.createElement("p");
   details.className="small";
@@ -507,9 +444,7 @@ function renderHistory(){
 
 function deleteRecord(id){
  if(!confirm("Delete this History record?"))return;
-
  const history=getHistory().filter(x=>x.id!==id);
-
  if(storeHistory(history)){
   renderHistory();
   updateStats();
@@ -518,30 +453,27 @@ function deleteRecord(id){
 
 function clearHistory(){
  if(!confirm("Are you sure you want to delete ALL History?"))return;
-
  if(storeHistory([])){
   renderHistory();
   updateStats();
   showResult("All History cleared.","info");
+  document.getElementById("saveStatus").textContent="";
  }
 }
 
 function backupHistory(){
  try{
   const data={
-   version:12,
+   version:12.1,
    exportDate:new Date().toISOString(),
    history:getHistory()
   };
-
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-
   a.href=url;
-  a.download="scanner-v12-backup.json";
+  a.download="scanner-v12.1-backup.json";
   a.click();
-
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  }catch(e){
   alert("Backup failed: "+e.message);
@@ -550,27 +482,19 @@ function backupHistory(){
 
 function validHistoryRecord(x){
  if(!x||typeof x!=="object")return false;
-
  const pattern=x.pattern||x.type;
 
  if(!["BUY","SELL","BOTH"].includes(pattern))return false;
  if(!["DETECTED","NOT DETECTED"].includes(x.result))return false;
  if(!Array.isArray(x.candles)||x.candles.length!==5)return false;
-
  if(pattern==="BOTH"&&x.result!=="NOT DETECTED")return false;
 
  return x.candles.every(c=>{
   if(!c||typeof c!=="object")return false;
-
   const values=[c.open,c.high,c.low,c.close];
-
-  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0)){
-   return false;
-  }
-
+  if(!values.every(v=>typeof v==="number"&&Number.isFinite(v)&&v>0))return false;
   return c.high>=Math.max(c.open,c.close)&&
-   c.low<=Math.min(c.open,c.close)&&
-   c.high>=c.low;
+   c.low<=Math.min(c.open,c.close)&&c.high>=c.low;
  });
 }
 
@@ -593,7 +517,6 @@ function restoreHistory(event){
 
    if(!Array.isArray(incoming))throw new Error("Invalid backup file.");
    if(incoming.length>1000)throw new Error("Too many records in backup.");
-
    if(!incoming.every(validHistoryRecord)){
     throw new Error("Backup contains invalid History records.");
    }
@@ -607,11 +530,7 @@ function restoreHistory(event){
 
    combined.forEach((record,index)=>{
     let id=record.id||("restored-"+Date.now()+"-"+index);
-
-    if(ids.has(id)){
-     id="restored-"+Date.now()+"-"+index;
-    }
-
+    if(ids.has(id))id="restored-"+Date.now()+"-"+index;
     ids.add(id);
     unique.push({...record,id});
    });
@@ -632,28 +551,21 @@ function restoreHistory(event){
   alert("Could not read the backup file.");
   event.target.value="";
  };
-
  reader.readAsText(file);
 }
 
 function exportCSV(){
  const history=getHistory();
-
  if(history.length===0){
   alert("No History to export.");
   return;
  }
 
- const headers=["Date","Candle Time","Mode","Pattern","Result"];
- const rows=[headers];
-
+ const rows=[["Date","Candle Time","Mode","Pattern","Result"]];
  history.forEach(x=>{
   rows.push([
-   x.date||"",
-   x.candleTime||"",
-   x.mode||"",
-   x.pattern||x.type||"",
-   x.result||""
+   x.date||"",x.candleTime||"",x.mode||"",
+   x.pattern||x.type||"",x.result||""
   ]);
  });
 
@@ -664,23 +576,17 @@ function exportCSV(){
  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const a=document.createElement("a");
-
  a.href=url;
  a.download="scanner-history.csv";
  a.click();
-
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
   navigator.serviceWorker.register("./sw.js")
-   .then(()=>{
-    document.getElementById("appStatus").textContent="V12 Offline support ready";
-   })
-   .catch(()=>{
-    document.getElementById("appStatus").textContent="Offline setup pending";
-   });
+   .then(()=>document.getElementById("appStatus").textContent="V12.1 Offline support ready")
+   .catch(()=>document.getElementById("appStatus").textContent="Offline setup pending");
  });
 }
 
@@ -692,10 +598,8 @@ window.addEventListener("beforeinstallprompt",event=>{
 
 document.getElementById("installBtn").addEventListener("click",async()=>{
  if(!deferredInstallPrompt)return;
-
  deferredInstallPrompt.prompt();
  await deferredInstallPrompt.userChoice;
-
  deferredInstallPrompt=null;
  document.getElementById("installBtn").classList.add("hidden");
 });
